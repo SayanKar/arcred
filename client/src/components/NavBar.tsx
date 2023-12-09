@@ -6,8 +6,18 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
+import {useGlobalContext} from "../contextProviders/GlobalContextProvider";
+import {useEffect, useState} from "react";
+import {getMetaMaskConnectionStatus} from "../pages/MetaMaskConnector";
 
 export const NavBar = () => {
+    const {step: currentMetamaskStep} = useGlobalContext();
+    const [isMetamaskConnected, setIsMetamaskConnected] = useState<boolean>(false);
+
+    useEffect(() => {
+        setIsMetamaskConnected(getMetaMaskConnectionStatus(currentMetamaskStep).isConnected);
+    }, [currentMetamaskStep]);
+
     return (
         <Box sx={{ flexGrow: 1 }}>
             <AppBar position="static">
@@ -24,7 +34,10 @@ export const NavBar = () => {
                     <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
                         ArCred
                     </Typography>
-                    <Button color="inherit" variant="outlined">Connect with MetaMask</Button>
+                    {isMetamaskConnected ?
+                        <Button disableRipple color="success" variant="contained">Connected to MetaMask</Button>
+                        :
+                        <Button disableRipple color="error" variant="contained">Not connected to MetaMask</Button>}
                 </Toolbar>
             </AppBar>
         </Box>
