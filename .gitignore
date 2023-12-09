@@ -2,6 +2,7 @@
 
 # dependencies
 /contracts/rust/target
+/target
 /client/node_modules
 /.pnp
 .pnp.js
