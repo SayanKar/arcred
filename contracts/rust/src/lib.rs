@@ -63,9 +63,28 @@ sol_storage! {
         uint256 next_loan_id;
         mapping(address => uint256[]) borrower_to_loan_id;
         mapping(address => uint256 []) lender_to_loan_id;
-        mapping(uint256 => LoanInfo) loan_id_to_loan_info;
-        mapping(uint256 => LoanState) loan_id_to_loan_state;
-        mapping(address => BorrowerStats) borrower_to_borrower_stats;
+
+        // LoanInfo
+        mapping(uint256 => uint8) loan_id_to_loan_type;
+        mapping(uint256 => string) loan_id_to_desc;
+        mapping(uint256 => uint256) loan_id_to_creation_time;
+        mapping(uint256 => uint256) loan_id_to_sanctioned_amount;
+        mapping(uint256 => address) loan_id_to_lender;
+        mapping(uint256 => address) loan_id_to_borrower;
+        mapping(uint256 => bool) loan_id_to_is_active;
+
+        // LoanState
+        mapping(uint256 => uint256) loan_id_to_unsettled_amount;
+        mapping(uint256 => uint256) loan_id_to_default_amount;
+        mapping(uint256 => uint256) loan_id_to_last_updated;
+
+        // BorrowerStats
+        mapping(address => uint16) borrower_to_credit_score;
+        mapping(address => uint256) borrower_to_number_of_defaults;
+        mapping(address => uint256) borrower_to_number_of_credit_lines;
+        mapping(address => uint256) borrower_to_number_of_consumer_loans;
+
+
         mapping(address => bool) is_lender;
         mapping(address => mapping (address => bool)) is_lender_approved;
         address [] approved_lenders;
@@ -84,28 +103,6 @@ impl From<BorrowerStats> for BorrowerStatsExpanded {
         )
     }
 }
-
-alloy_sol_types::sol!(
-    function registerLoan(uint8 _loanType, string calldata _desc, uint256 _amount, address _borrower) isValidLender hasApproval(_borrower) public returns (uint256 loanId) {
-        isLenderApproved[_borrower][msg.sender] = false;
-        loanId = nextLoanId++;
-        loanIdToLoanInfo[loanId] = LoanInfo(loanId, _loanType, _desc, block.timestamp, _amount, msg.sender, _borrower, true);
-        lenderToLoanId[msg.sender].push(loanId);
-        borrowerToLoanId[_borrower].push(loanId);
-        initializeBorrowerStatsIfEmpty(_borrower);
-        initializeLoanStateIfEmpty(loanId);
-        // updateLoanStateAndBorrowerStats
-        if( _loanType == LoanType.CREDIT_LINE) {
-            borrowerToBorrowerStats[_borrower].numberOfCreditLines++;
-        } else {
-            borrowerToBorrowerStats[_borrower].numberOfConsumerLoans++;
-            loanIdToLoanState[loanId].unsettledAmount = _amount;
-            loanIdToLoanState[loanId].lastUpdated = block.timestamp;
-        }
-        borrowerToBorrowerStats[_borrower].creditScore = calculateScore(_borrower, loanId);
-
-    }
-);
 
 // Getters
 #[external]
@@ -133,22 +130,6 @@ impl Arcred {
     // pub fn lender_to_loan_id(&self, lender: Address) -> Result<Vec<U256>, Vec<u8>> {
     //     Ok(self.lender_to_loan_id.get(lender))
     // }
-
-    // pub fn loan_id_to_loan_info(&self, loan_id: U256) -> Result<LoanInfo, Vec<u8>> {
-    //     Ok(*self.loan_id_to_loan_info.get(loan_id).deref())
-    // }
-
-    // pub fn loan_id_to_loan_state(&self, loan_id: U256) -> Result<LoanState, Vec<u8>> {
-    //     Ok(*self.loan_id_to_loan_state.get(loan_id).deref())
-    // }
-
-    pub fn borrower_to_borrower_stats(&self, borrower: Address) -> Result<BorrowerStatsExpanded, Vec<u8>> {
-        let borrower_stats = unsafe {
-            self.borrower_to_borrower_stats.get(borrower).into_raw()
-        };
-
-        Ok(borrower_stats.into())
-    }
 
     pub fn is_lender(&self, lender: Address) -> Result<bool, Vec<u8>> {
         Ok(self.is_lender.get(lender))
@@ -194,36 +175,6 @@ impl Arcred {
         status.set(approve);
         
         Ok(())
-    }
-
-    pub fn register_loan(
-        &mut self,
-        loan_type: u8,
-        desc: String,
-        amount: U256,
-        borrower: Address,
-    ) -> Result<U256, Vec<u8>> {
-        self.is_valid_lender();
-        self.has_approval(borrower);
-
-        self.is_lender_approved.setter(borrower).insert(msg::sender(), false);
-
-        let loan_id = self.next_loan_id.get();
-
-        // let loan_info = LoanInfo {
-        //     loan_id: loan_id,
-        //     loan_type,
-        //     desc,
-        //     creation_time: amount,
-        //     sanctioned_amount: amount,
-        //     lender: msg::sender(),
-        //     borrower,
-        //     is_active: true,
-        // };
-
-        let setter1 = self.loan_id_to_loan_state.setter(loan_id);
-
-        todo!()
     }
 }
 
