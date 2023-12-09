@@ -8,7 +8,7 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 /// Import the Stylus SDK along with alloy primitive types for use in our program.
 use stylus_sdk::prelude::*;
-use alloy_primitives::Address;
+use alloy_primitives::{Address, U256};
 
 // Define the entrypoint as a Solidity storage object, The sol_storage! macro
 // will generate Rust-equivalent structs with all fields mapped to Solidity-equivalent
@@ -62,6 +62,54 @@ sol_storage! {
     }
 }
 
+// Getters
 #[external]
+impl Arcred {
+    pub fn admin(&self) -> Result<Address, Vec<u8>> {
+        Ok(self.admin.get())
+    }
 
+    pub fn credit_line_cooldown_period(&self) -> Result<U256, Vec<u8>> {
+        Ok(self.credit_line_cooldown_period.get())
+    }
+
+    pub fn consumer_loan_cooldown_period(&self) -> Result<U256, Vec<u8>> {
+        Ok(self.consumer_loan_cooldown_period.get())
+    }
+
+    pub fn next_loan_id(&self) -> Result<U256, Vec<u8>> {
+        Ok(self.next_loan_id.get())
+    }
+
+    // pub fn borrower_to_loan_id(&self, borrower: Address) -> Result<Vec<U256>, Vec<u8>> {
+    //     Ok(self.borrower_to_loan_id.get(borrower))
+    // }
+
+    // pub fn lender_to_loan_id(&self, lender: Address) -> Result<Vec<U256>, Vec<u8>> {
+    //     Ok(self.lender_to_loan_id.get(lender))
+    // }
+
+    // pub fn loan_id_to_loan_info(&self, loan_id: U256) -> Result<LoanInfo, Vec<u8>> {
+    //     Ok(*self.loan_id_to_loan_info.get(loan_id).deref())
+    // }
+
+    // pub fn loan_id_to_loan_state(&self, loan_id: U256) -> Result<LoanState, Vec<u8>> {
+    //     Ok(*self.loan_id_to_loan_state.get(loan_id).deref())
+    // }
+
+    // pub fn borrower_to_borrower_stats(&self, borrower: Address) -> Result<BorrowerStats, Vec<u8>> {
+    //     Ok(*self.borrower_to_borrower_stats.get(borrower).deref())
+    // }
+
+    pub fn is_lender(&self, lender: Address) -> Result<bool, Vec<u8>> {
+        Ok(self.is_lender.get(lender))
+    }
+
+    pub fn is_lender_approved(&self, borrower: Address, lender: Address) -> Result<bool, Vec<u8>> {
+        Ok(self.is_lender_approved.get(borrower).get(lender))
+    }
+
+    pub fn approved_lenders(&self, index: U256) -> Result<Address, Vec<u8>> {
+        Ok(self.approved_lenders.get(index).unwrap())
+    }
 }
