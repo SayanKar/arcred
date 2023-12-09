@@ -3,6 +3,124 @@
         {
             "inputs": [
                 {
+                    "internalType": "address",
+                    "name": "_lenderAddress",
+                    "type": "address"
+                },
+                {
+                    "internalType": "bool",
+                    "name": "approve",
+                    "type": "bool"
+                }
+            ],
+            "name": "approveLender",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "_loanId",
+                    "type": "uint256"
+                }
+            ],
+            "name": "closeLoan",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "_loanId",
+                    "type": "uint256"
+                },
+                {
+                    "components": [
+                        {
+                            "internalType": "uint256",
+                            "name": "loanId",
+                            "type": "uint256"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "unsettledAmount",
+                            "type": "uint256"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "defaultAmount",
+                            "type": "uint256"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "lastUpdated",
+                            "type": "uint256"
+                        }
+                    ],
+                    "internalType": "struct Arcred.LoanState",
+                    "name": "_loanState",
+                    "type": "tuple"
+                }
+            ],
+            "name": "registerBorrowerActivity",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "_lenderAddress",
+                    "type": "address"
+                }
+            ],
+            "name": "registerLender",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "enum Arcred.LoanType",
+                    "name": "_loanType",
+                    "type": "uint8"
+                },
+                {
+                    "internalType": "string",
+                    "name": "_desc",
+                    "type": "string"
+                },
+                {
+                    "internalType": "uint256",
+                    "name": "_amount",
+                    "type": "uint256"
+                },
+                {
+                    "internalType": "address",
+                    "name": "_borrower",
+                    "type": "address"
+                }
+            ],
+            "name": "registerLoan",
+            "outputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "loanId",
+                    "type": "uint256"
+                }
+            ],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
                     "internalType": "uint64",
                     "name": "_creditLineCooldownPeriod",
                     "type": "uint64"
@@ -27,24 +145,6 @@
                 }
             ],
             "stateMutability": "view",
-            "type": "function"
-        },
-        {
-            "inputs": [
-                {
-                    "internalType": "address",
-                    "name": "_lenderAddress",
-                    "type": "address"
-                },
-                {
-                    "internalType": "bool",
-                    "name": "approve",
-                    "type": "bool"
-                }
-            ],
-            "name": "approveLender",
-            "outputs": [],
-            "stateMutability": "nonpayable",
             "type": "function"
         },
         {
@@ -77,9 +177,9 @@
             "name": "borrowerToBorrowerStats",
             "outputs": [
                 {
-                    "internalType": "uint16",
+                    "internalType": "uint256",
                     "name": "creditScore",
-                    "type": "uint16"
+                    "type": "uint256"
                 },
                 {
                     "internalType": "uint256",
@@ -125,19 +225,6 @@
             "type": "function"
         },
         {
-            "inputs": [
-                {
-                    "internalType": "uint256",
-                    "name": "_loanId",
-                    "type": "uint256"
-                }
-            ],
-            "name": "closeLoan",
-            "outputs": [],
-            "stateMutability": "nonpayable",
-            "type": "function"
-        },
-        {
             "inputs": [],
             "name": "consumerLoanCooldownPeriod",
             "outputs": [
@@ -164,6 +251,19 @@
             "type": "function"
         },
         {
+            "inputs": [],
+            "name": "getApprovedLenders",
+            "outputs": [
+                {
+                    "internalType": "address[]",
+                    "name": "approvedLendersList",
+                    "type": "address[]"
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
             "inputs": [
                 {
                     "internalType": "address",
@@ -178,9 +278,9 @@
                         {
                             "components": [
                                 {
-                                    "internalType": "uint16",
+                                    "internalType": "uint256",
                                     "name": "creditScore",
-                                    "type": "uint16"
+                                    "type": "uint256"
                                 },
                                 {
                                     "internalType": "uint256",
@@ -213,7 +313,7 @@
                     "type": "tuple"
                 }
             ],
-            "stateMutability": "nonpayable",
+            "stateMutability": "view",
             "type": "function"
         },
         {
@@ -320,9 +420,9 @@
                         {
                             "components": [
                                 {
-                                    "internalType": "uint16",
+                                    "internalType": "uint256",
                                     "name": "creditScore",
-                                    "type": "uint16"
+                                    "type": "uint256"
                                 },
                                 {
                                     "internalType": "uint256",
@@ -355,7 +455,7 @@
                     "type": "tuple"
                 }
             ],
-            "stateMutability": "nonpayable",
+            "stateMutability": "view",
             "type": "function"
         },
         {
@@ -524,93 +624,6 @@
                 }
             ],
             "stateMutability": "view",
-            "type": "function"
-        },
-        {
-            "inputs": [
-                {
-                    "internalType": "uint256",
-                    "name": "_loanId",
-                    "type": "uint256"
-                },
-                {
-                    "components": [
-                        {
-                            "internalType": "uint256",
-                            "name": "loanId",
-                            "type": "uint256"
-                        },
-                        {
-                            "internalType": "uint256",
-                            "name": "unsettledAmount",
-                            "type": "uint256"
-                        },
-                        {
-                            "internalType": "uint256",
-                            "name": "defaultAmount",
-                            "type": "uint256"
-                        },
-                        {
-                            "internalType": "uint256",
-                            "name": "lastUpdated",
-                            "type": "uint256"
-                        }
-                    ],
-                    "internalType": "struct Arcred.LoanState",
-                    "name": "_loanState",
-                    "type": "tuple"
-                }
-            ],
-            "name": "registerBorrowerActivity",
-            "outputs": [],
-            "stateMutability": "nonpayable",
-            "type": "function"
-        },
-        {
-            "inputs": [
-                {
-                    "internalType": "address",
-                    "name": "_lenderAddress",
-                    "type": "address"
-                }
-            ],
-            "name": "registerLender",
-            "outputs": [],
-            "stateMutability": "nonpayable",
-            "type": "function"
-        },
-        {
-            "inputs": [
-                {
-                    "internalType": "enum Arcred.LoanType",
-                    "name": "_loanType",
-                    "type": "uint8"
-                },
-                {
-                    "internalType": "string",
-                    "name": "_desc",
-                    "type": "string"
-                },
-                {
-                    "internalType": "uint256",
-                    "name": "_amount",
-                    "type": "uint256"
-                },
-                {
-                    "internalType": "address",
-                    "name": "_borrower",
-                    "type": "address"
-                }
-            ],
-            "name": "registerLoan",
-            "outputs": [
-                {
-                    "internalType": "uint256",
-                    "name": "loanId",
-                    "type": "uint256"
-                }
-            ],
-            "stateMutability": "nonpayable",
             "type": "function"
         }
     ]
