@@ -7,6 +7,11 @@ import TableCell from "@mui/material/TableCell";
 import Grid2 from "@mui/material/Unstable_Grid2";
 import Typography from "@mui/material/Typography";
 import TableHead from "@mui/material/TableHead";
+import {TextField} from "@mui/material";
+import Button from "@mui/material/Button";
+import * as React from "react";
+import {useEffect, useState} from "react";
+import {BorrowerStats} from "../contextProviders/APIContextProvider";
 
 
 export const BorrowerDashboard = () => {
@@ -52,6 +57,17 @@ export const BorrowerDashboard = () => {
             lastUpdated: "515115"}
     ]
 
+    const [lenderAddress, setLenderAddress] = useState<string>('');
+    const [creditReport, setCreditReport] = useState<BorrowerStats>({} as BorrowerStats);
+
+    useEffect(() => {
+        //fetch credit report
+    }, []);
+
+    const handleLenderAllowlist = () => {
+
+    }
+
     return <>
         <Typography sx={{ mt: 4, mb: 2 }} variant="h6" component="div" marginTop={2}>
             Your credit report
@@ -65,6 +81,16 @@ export const BorrowerDashboard = () => {
         </Typography>
         <Grid2 xs display="flex" justifyContent="center" alignItems="center" flexDirection={"column"}>
             {getLoanTable(sampleLoanData)}
+        </Grid2>
+
+
+        <Typography sx={{ mt: 4, mb: 2 }} variant="h6" component="div" marginTop={2}>
+            Whitelist a lender to view your credit score
+        </Typography>
+
+        <Grid2 xs >
+            <TextField id="lender's account id" label="Lender's Account Id" variant="outlined" onChange={(e) => {setLenderAddress(e.target.value)}}/>
+            <Button color="success" variant="outlined" onClick={handleLenderAllowlist}>Allow</Button>
         </Grid2>
     </>
 }
@@ -108,7 +134,7 @@ const getLoanTable = (loanData: any) => {
                 {loanData.map((d: any, i: number) => <TableRow
                     sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                 >
-                    <TableCell>{d.loadId}</TableCell>
+                    <TableCell>{d.loanId}</TableCell>
                     <TableCell align="right">{d.type}</TableCell>
                     <TableCell align="right">{d.desc}</TableCell>
                     <TableCell align="right">{d.creationTime}</TableCell>
