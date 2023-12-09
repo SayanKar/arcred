@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity >= 0.8.20 <0.9.0;
 
-contract Arcred {
+import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol";
+import {CCIPReceiver} from "@chainlink/contracts-ccip/src/v0.8/ccip/applications/CCIPReceiver.sol";
+
+contract Arcred is CCIPReceiver {
 
     // Enum to represent different types of loans
     enum LoanType {
@@ -49,6 +52,12 @@ contract Arcred {
         LoanState loanState;  // State of the loan
     }
 
+    struct CCIPPayload {
+        address caller;
+        bytes4 func;
+        bytes params;
+    }
+
     address public admin;                   // Address of the administrator
     uint256 public creditLineCooldownPeriod;// Cooldown period for credit lines
     uint256 public consumerLoanCooldownPeriod;// Cooldown period for consumer loans
@@ -77,30 +86,65 @@ contract Arcred {
     mapping(address => mapping (address => bool)) public isLenderApproved;
     // Array of approved lenders
     address [] public approvedLenders;
+    address private ccipSender;
 
     // Constructor to initialize the contract with cooldown periods
-    constructor(uint64 _creditLineCooldownPeriod, uint64 _consumerLoanCooldownPeriod) {
-        admin = msg.sender;
+    constructor(uint64 _creditLineCooldownPeriod, uint64 _consumerLoanCooldownPeriod, address _router) CCIPReceiver(_router) {
+        admin = _msgSender();
         creditLineCooldownPeriod = _creditLineCooldownPeriod;
         consumerLoanCooldownPeriod = _consumerLoanCooldownPeriod;
         nextLoanId = 1;
     }
 
+    function _ccipReceive(Client.Any2EVMMessage memory _any2EvmMessage)
+        internal
+        override
+    {
+        uint64 sourceChainSelector = _any2EvmMessage.sourceChainSelector;
+        address sender = abi.decode(_any2EvmMessage.sender, (address));
+        require(isAllowed(sourceChainSelector, sender), "Not whitelisted");
+
+        CCIPPayload memory ccipPayload = abi.decode(_any2EvmMessage.data, (CCIPPayload));
+        ccipSender = ccipPayload.caller;
+
+        bytes4 func = ccipPayload.func;
+        bytes memory params = ccipPayload.params;
+
+        if (func == this.registerLender.selector) {
+            address lender = abi.decode(params, (address));
+            registerLender(lender);
+        } else if (func == this.approveLender.selector) {
+            (address lender, bool approve) = abi.decode(params, (address, bool));
+            approveLender(lender, approve);
+        } else if (func == this.registerLoan.selector) {
+            (LoanType loanType, string memory desc, uint256 amount, address borrower) = abi.decode(params, (LoanType, string, uint256, address));
+            registerLoan(loanType, desc, amount, borrower);
+        } else if (func == this.closeLoan.selector) {
+            uint256 loanId = abi.decode(params, (uint256));
+            closeLoan(loanId);
+        } else if (func == this.registerBorrowerActivity.selector) {
+            (uint256 loanId, LoanState memory loanState) = abi.decode(params, (uint256, LoanState));
+            registerBorrowerActivity(loanId, loanState);
+        } else {
+            revert("Unrecognised function selector");
+        }
+    }
+
     // Modifier: Only allows the administrator to execute a function
     modifier onlyAdmin() {
-        require(msg.sender == admin, "You need to be Admin to do this operation");
+        require(_msgSender() == admin, "You need to be Admin to do this operation");
         _;
     }
 
     // Modifier: Requires the sender to be a registered lender
     modifier isValidLender() {
-        require(isLender[msg.sender], "You need to be a lender to do this operation");
+        require(isLender[_msgSender()], "You need to be a lender to do this operation");
         _;
     }
 
     // Modifier: Requires lender approval for a specific borrower
     modifier hasApproval(address _borrower) {
-        require(isLenderApproved[_borrower][msg.sender], "You need to be an approved lender for the address to do this operation");
+        require(isLenderApproved[_borrower][_msgSender()], "You need to be an approved lender for the address to do this operation");
         _;
     }
 
@@ -121,8 +165,8 @@ contract Arcred {
      */
     function approveLender(address _lenderAddress, bool approve) public {
         require(isLender[_lenderAddress], "The address provided is not a lender");
-        require(isLenderApproved[msg.sender][_lenderAddress] != approve, "State already set");
-        isLenderApproved[msg.sender][_lenderAddress] = approve;   
+        require(isLenderApproved[_msgSender()][_lenderAddress] != approve, "State already set");
+        isLenderApproved[_msgSender()][_lenderAddress] = approve;   
     }   
 
     /*
@@ -133,12 +177,12 @@ contract Arcred {
      * @params _borrower The address of the borrower.
      * @returns loanId The unique identifier of the new loan.
      */
-    function registerLoan(LoanType _loanType, string calldata _desc, uint256 _amount, address _borrower) 
+    function registerLoan(LoanType _loanType, string memory _desc, uint256 _amount, address _borrower) 
         isValidLender hasApproval(_borrower) public returns (uint256 loanId) {
 
         loanId = nextLoanId++;
-        loanIdToLoanInfo[loanId] = LoanInfo(loanId, _loanType, _desc, block.timestamp, _amount, msg.sender, _borrower, true);
-        lenderToLoanId[msg.sender].push(loanId);
+        loanIdToLoanInfo[loanId] = LoanInfo(loanId, _loanType, _desc, block.timestamp, _amount, _msgSender(), _borrower, true);
+        lenderToLoanId[_msgSender()].push(loanId);
         borrowerToLoanId[_borrower].push(loanId);
 
         initializeBorrowerStatsIfEmpty(_borrower);
@@ -162,7 +206,7 @@ contract Arcred {
      */
     function closeLoan(uint256 _loanId) isValidLender public {
         require(_loanId < nextLoanId, "Invalid loanId");
-        require(loanIdToLoanInfo[_loanId].lender == msg.sender, "You need to be the lender for this loan to do this operation");
+        require(loanIdToLoanInfo[_loanId].lender == _msgSender(), "You need to be the lender for this loan to do this operation");
         loanIdToLoanInfo[_loanId].isActive = false;
 
         // Update loan state and borrower stats
@@ -185,8 +229,8 @@ contract Arcred {
      * @returns creditReport The credit report of the sender.
      */
     function getMyCreditReport() public view returns (CreditReport memory creditReport){
-        creditReport.borrowerStats = getBorrowerStats(msg.sender);
-        creditReport.loanIds = borrowerToLoanId[msg.sender];
+        creditReport.borrowerStats = getBorrowerStats(_msgSender());
+        creditReport.loanIds = borrowerToLoanId[_msgSender()];
     }
 
     /*
@@ -199,7 +243,7 @@ contract Arcred {
         for(uint i = 0; i < _loanIds.length; i++) {
             uint256 loanId = _loanIds[i];
             require( loanId < nextLoanId, "Invalid loanId");
-            require( loanIdToLoanInfo[loanId].borrower == msg.sender || isLenderApproved[loanIdToLoanInfo[loanId].borrower][msg.sender], 
+            require( loanIdToLoanInfo[loanId].borrower == _msgSender() || isLenderApproved[loanIdToLoanInfo[loanId].borrower][_msgSender()], 
                 "Do not have permission to do this query");
             loanDataList[i] = (LoanData(loanIdToLoanInfo[loanId], loanIdToLoanState[loanId]));
         }
@@ -212,7 +256,7 @@ contract Arcred {
      */
     function getBorrowerCreditReport(address _borrower) isValidLender hasApproval(_borrower) public view returns(CreditReport memory creditReport) {
         creditReport.borrowerStats = getBorrowerStats(_borrower);
-        creditReport.loanIds = borrowerToLoanId[msg.sender];
+        creditReport.loanIds = borrowerToLoanId[_msgSender()];
     }
 
     /*
@@ -253,7 +297,7 @@ contract Arcred {
      * @params _loanState The state of the loan.
      */
     function registerBorrowerActivity(uint256 _loanId, LoanState memory _loanState) isValidLender public {
-        require(loanIdToLoanInfo[_loanId].lender == msg.sender, "You need to be the lender of this loan to do this operation");
+        require(loanIdToLoanInfo[_loanId].lender == _msgSender(), "You need to be the lender of this loan to do this operation");
         require(loanIdToLoanInfo[_loanId].isActive, "Loan is not active");
 
         // Check cooldown period based on the type of loan
@@ -310,5 +354,18 @@ contract Arcred {
 
     function getApprovedLenders() public view returns(address[] memory approvedLendersList) {
         approvedLendersList = approvedLenders;
+    }
+
+    function _msgSender() internal view virtual returns (address) {
+        address sender = msg.sender;
+        if (sender == getRouter()) {
+            sender = ccipSender;
+        }
+        return sender;
+    }
+
+    function isAllowed(uint64 _sourceChainSelector, address _sender) public view virtual returns (bool) {
+        // Add approval layer
+        return true;
     }
 }
