@@ -1,10 +1,10 @@
 [
     {
-        "chainId": "0x13881",
-        "chainName": "Polygon Mumbai Testnet",
-        "symbol": "MATIC",
+        "chainId": "0x5",
+        "chainName": "Goerli Testnet",
+        "symbol": "gETH",
         "decimals": 18,
-        "rpcUrls": ["https://rpc-mumbai.maticvigil.com/"],
+        "rpcUrls": ["https://mainnet.infura.io/v3/"],
         "blockExplorerUrls": ["https://polygonscan.com/"],
         "minimumWalletBalance": 0
     },
