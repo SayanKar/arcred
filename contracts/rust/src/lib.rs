@@ -8,7 +8,7 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 /// Import the Stylus SDK along with alloy primitive types for use in our program.
 use stylus_sdk::{prelude::*, msg};
-use alloy_primitives::{Address, U256};
+use stylus_sdk::alloy_primitives::{Address, U256};
 
 // Define the entrypoint as a Solidity storage object, The sol_storage! macro
 // will generate Rust-equivalent structs with all fields mapped to Solidity-equivalent
@@ -45,6 +45,16 @@ sol_storage! {
         uint256 number_of_consumer_loans;
     }
 
+    // pub struct CreditReport {
+    //     BorrowerStats borrower_stats;
+    //     uint256[] loan_ids;
+    // }
+
+    // pub struct LoanData {
+    //     LoanInfo loan_info;
+    //     LoanState loan_state;
+    // }
+
     #[entrypoint]
     pub struct Arcred {
         address admin;
@@ -74,6 +84,28 @@ impl From<BorrowerStats> for BorrowerStatsExpanded {
         )
     }
 }
+
+alloy_sol_types::sol!(
+    function registerLoan(uint8 _loanType, string calldata _desc, uint256 _amount, address _borrower) isValidLender hasApproval(_borrower) public returns (uint256 loanId) {
+        isLenderApproved[_borrower][msg.sender] = false;
+        loanId = nextLoanId++;
+        loanIdToLoanInfo[loanId] = LoanInfo(loanId, _loanType, _desc, block.timestamp, _amount, msg.sender, _borrower, true);
+        lenderToLoanId[msg.sender].push(loanId);
+        borrowerToLoanId[_borrower].push(loanId);
+        initializeBorrowerStatsIfEmpty(_borrower);
+        initializeLoanStateIfEmpty(loanId);
+        // updateLoanStateAndBorrowerStats
+        if( _loanType == LoanType.CREDIT_LINE) {
+            borrowerToBorrowerStats[_borrower].numberOfCreditLines++;
+        } else {
+            borrowerToBorrowerStats[_borrower].numberOfConsumerLoans++;
+            loanIdToLoanState[loanId].unsettledAmount = _amount;
+            loanIdToLoanState[loanId].lastUpdated = block.timestamp;
+        }
+        borrowerToBorrowerStats[_borrower].creditScore = calculateScore(_borrower, loanId);
+
+    }
+);
 
 // Getters
 #[external]
@@ -162,6 +194,36 @@ impl Arcred {
         status.set(approve);
         
         Ok(())
+    }
+
+    pub fn register_loan(
+        &mut self,
+        loan_type: u8,
+        desc: String,
+        amount: U256,
+        borrower: Address,
+    ) -> Result<U256, Vec<u8>> {
+        self.is_valid_lender();
+        self.has_approval(borrower);
+
+        self.is_lender_approved.setter(borrower).insert(msg::sender(), false);
+
+        let loan_id = self.next_loan_id.get();
+
+        // let loan_info = LoanInfo {
+        //     loan_id: loan_id,
+        //     loan_type,
+        //     desc,
+        //     creation_time: amount,
+        //     sanctioned_amount: amount,
+        //     lender: msg::sender(),
+        //     borrower,
+        //     is_active: true,
+        // };
+
+        let setter1 = self.loan_id_to_loan_state.setter(loan_id);
+
+        todo!()
     }
 }
 
