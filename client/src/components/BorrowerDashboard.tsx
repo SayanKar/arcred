@@ -11,7 +11,8 @@ import {TextField} from "@mui/material";
 import Button from "@mui/material/Button";
 import * as React from "react";
 import {useEffect, useState} from "react";
-import {BorrowerStats} from "../contextProviders/APIContextProvider";
+import {BorrowerStats, useApiContext} from "../contextProviders/APIContextProvider";
+import {useGlobalContext} from "../contextProviders/GlobalContextProvider";
 
 
 export const BorrowerDashboard = () => {
@@ -57,11 +58,23 @@ export const BorrowerDashboard = () => {
             lastUpdated: "515115"}
     ]
 
+    const {account} = useGlobalContext();
+    const {getMyCreditReport, getLoanIdsOfBorrower, getLoanDataFromLoanIds} = useApiContext();
+
     const [lenderAddress, setLenderAddress] = useState<string>('');
     const [creditReport, setCreditReport] = useState<BorrowerStats>({} as BorrowerStats);
 
     useEffect(() => {
         //fetch credit report
+        getMyCreditReport().then(res => {
+            if(res.isError){
+                alert(res.message);
+            }
+            setCreditReport(res.item!);
+        })
+
+        //fetch loan report
+
     }, []);
 
     const handleLenderAllowlist = () => {
@@ -73,7 +86,10 @@ export const BorrowerDashboard = () => {
             Your credit report
         </Typography>
         <Grid2 xs display="flex" justifyContent="center" alignItems="center" flexDirection={"column"}>
-            {getDataTable(sampleData)}
+            {getDataTable(Object.keys(creditReport).map(k => {
+                // @ts-ignore
+                return {attrName: k, val: creditReport[k]}
+            }))}
         </Grid2>
 
         <Typography sx={{ mt: 4, mb: 2 }} variant="h6" component="div" marginTop={2}>

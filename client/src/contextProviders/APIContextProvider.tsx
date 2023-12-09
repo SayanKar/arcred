@@ -2,22 +2,22 @@ import React, {createContext, ReactNode, useContext } from 'react';
 import { useGlobalContext } from './GlobalContextProvider';
 
 interface IAPIContext {
-    getMyCreditReport?: () => Promise<ResponseType<BorrowerStats>>,
-    approveLender?: (lenderAddress: string, shouldApprove: boolean) => Promise<ResponseType<void>>,
-    getBorrowerCreditReport?: (borrowerAddress: string) => Promise<ResponseType<BorrowerStats>>,
-    registerLoan?: (loanType: number, description: string, amount: number, borrowerAddress: string) => Promise<ResponseType<number>>,
-    reportBorrowerActivity?: (loanId: number, unsettledAmount: number, defaultAmount: number, lastUpdated: number) => Promise<ResponseType<number>>,
-    closeLoan?: (loanId: number) => Promise<ResponseType<void>>,
-    registerLender?: (lenderAddress: string) => Promise<ResponseType<void>>,
+    getMyCreditReport: () => Promise<ResponseType<BorrowerStats>>,
+    approveLender: (lenderAddress: string, shouldApprove: boolean) => Promise<ResponseType<void>>,
+    getBorrowerCreditReport: (borrowerAddress: string) => Promise<ResponseType<BorrowerStats>>,
+    registerLoan: (loanType: number, description: string, amount: number, borrowerAddress: string) => Promise<ResponseType<number>>,
+    reportBorrowerActivity: (loanId: number, unsettledAmount: number, defaultAmount: number, lastUpdated: number) => Promise<ResponseType<number>>,
+    closeLoan: (loanId: number) => Promise<ResponseType<void>>,
+    registerLender: (lenderAddress: string) => Promise<ResponseType<void>>,
 
-    isLenderApprovedByCurrentAccount?: (lenderAddress: string) => Promise<ResponseType<boolean>>,
-    getLoanDataFromLoanIds?: (loanIds: number[]) => Promise<ResponseType<any>>,
-    isLender?: (lenderAddress: string) => Promise<ResponseType<boolean>>,
-    getLoanIdsOfLender?: (lenderAddress: string) => Promise<ResponseType<string[]>>,
-    getLoanIdsOfBorrower?: (borrowerAddress: string) => Promise<ResponseType<string[]>>,
+    isLenderApprovedByCurrentAccount: (lenderAddress: string) => Promise<ResponseType<boolean>>,
+    getLoanDataFromLoanIds: (loanIds: number[]) => Promise<ResponseType<any>>,
+    isLender: (lenderAddress: string) => Promise<ResponseType<boolean>>,
+    getLoanIdsOfLender: (lenderAddress: string) => Promise<ResponseType<string[]>>,
+    getLoanIdsOfBorrower: (borrowerAddress: string) => Promise<ResponseType<string[]>>,
 }
 
-const APIContext = createContext<IAPIContext>({});
+const APIContext = createContext<IAPIContext>({} as IAPIContext);
 export const useApiContext = () => useContext(APIContext);
 
 export type LoanInfo = {
