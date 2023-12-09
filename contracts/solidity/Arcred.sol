@@ -34,9 +34,19 @@ contract Arcred {
         uint256 numberOfConsumerLoans;
     }
 
+    struct CreditReport {
+        BorrowerStats borrowerStats;
+        uint256[] loanIds;
+    }
+
+    struct LoanData {
+        LoanInfo loanInfo;
+        LoanState loanState;
+    }
+
     address public admin;
-    uint64 public creditLineCooldownPeriod;
-    uint64 public consumerLoanCooldownPeriod;
+    uint256 public creditLineCooldownPeriod;
+    uint256 public consumerLoanCooldownPeriod;
     uint256 public nextLoanId;
     mapping(address => uint256 []) public borrowerToLoanId;
     mapping(address => uint256 []) public lenderToLoanId;
@@ -87,5 +97,12 @@ contract Arcred {
         borrowerToLoanId[_borrower].push(loanId);
         // updateLoanStateAndBorrowerStats
         return loanId;
+    }
+
+    function closeLoan(uint256 loanId) isValidLender public {
+        require(loanId < nextLoanId, "Invalid loanId");
+        require(loanIdToLoanInfo[loanId].lender == msg.sender, "You need to be the lender for this loan to do this operation");
+        loanIdToLoanInfo[loanId].isActive = false;
+        // updateLoanStateAndBorrowerStats
     }
 }
