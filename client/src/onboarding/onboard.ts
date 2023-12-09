@@ -57,7 +57,7 @@ function getChainID() {
 }
 
 async function handleConnection(accounts: any) {
-    if (accounts.length === 0) {
+    if (accounts?.length === 0) {
         const fetchedAccounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         return fetchedAccounts;
     }
@@ -69,9 +69,9 @@ async function handleConnection(accounts: any) {
 async function requestAccount() {
     let currentAccount = '0x0';
     if (isEthereum() && getChainID() !== 0) {
-        let accounts = await window.ethereum.request({ method: 'eth_accounts' });
-        accounts = await handleConnection(accounts);
-        currentAccount = accounts[0];
+        let accounts = await window.ethereum.request({ method: 'eth_accounts' }).catch(console.error);
+        accounts = await handleConnection(accounts).catch(console.error);
+        currentAccount = accounts?.[0];
     }
     return currentAccount;
 }
@@ -114,7 +114,7 @@ export const GetParams = async () => {
 
     try {
         const currentAccount = await requestAccount();
-        if (currentAccount === '0x0') {
+        if (!currentAccount || currentAccount === '0x0') {
             response.step = 1;
             return response;
         }
@@ -142,7 +142,7 @@ export const GetParams = async () => {
             return response;
         }
     } catch(err) {
-        console.log(err)
+        console.log("Inside err", err)
     }
 
     return response;
