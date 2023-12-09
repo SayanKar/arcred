@@ -1,11 +1,14 @@
 import './App.css';
+import {useUserContext} from "./contextProviders/UserContextProvider";
 
 function App() {
-  return (
+    const userContext = useUserContext();
+    console.log(userContext)
+    return (
     <div>
-      Hello World
+        {userContext.walletAddress}
     </div>
-  );
+    );
 }
 
 export default App;
