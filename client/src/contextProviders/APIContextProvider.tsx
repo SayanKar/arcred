@@ -38,6 +38,10 @@ export type BorrowerStats = {
     numberOfConsumerLoans: number,
 }
 
+export type CreditReport = BorrowerStats & {
+    loanData: LoanData[]
+}
+
 export type LoanState = {
     loanId: string,
     unsettledAmount: number,
@@ -119,16 +123,17 @@ export const APIContextProvider  = ({children}: {children: ReactNode})  => {
     /**
      * FOR USERS
      */
-    async function getMyCreditReport(): Promise<ResponseType<BorrowerStats>> {
-        const response: ResponseType<BorrowerStats> = { isError: true, message: 'Internal error', item: undefined }
+    async function getMyCreditReport(): Promise<ResponseType<CreditReport>> {
+        const response: ResponseType<CreditReport> = { isError: true, message: 'Internal error', item: undefined }
         try {
             const cR = await contract?.getMyCreditReport?.()
             const parsedBs = parseBorrowerStats(cR.borrowerStats)
+            const loanDataResponse = await getLoanDataFromLoanIds(cR.loanIds)
 
-            if (parsedBs) {
+            if (parsedBs && !loanDataResponse.isError && loanDataResponse.item) {
                 response.isError = false
                 response.message = 'Success'
-                response.item = parsedBs
+                response.item = {...parsedBs, loanData: loanDataResponse.item}
                 return response
             }
         } catch(err) {
