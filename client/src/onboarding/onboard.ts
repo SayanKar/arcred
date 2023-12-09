@@ -40,7 +40,7 @@ function isValidChainId(chainId: string) {
     }
 
     supportedConfigs.forEach((chain) => {
-        if(chain.chainId.toLowerCase() === stringToHex(chainId.toString()).toLowerCase()) {
+        if(chain.chainId.toLowerCase() === chainId.toLowerCase()) {
             response.isValid = true
             response.chain = chain
         }
