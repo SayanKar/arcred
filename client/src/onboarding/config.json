@@ -4,7 +4,7 @@
         "chainName": "Goerli Testnet",
         "symbol": "gETH",
         "decimals": 18,
-        "rpcUrls": ["https://mainnet.infura.io/v3/"],
+        "rpcUrls": ["https://goerli.blockpi.network/v1/rpc/public/"],
         "blockExplorerUrls": ["https://polygonscan.com/"],
         "minimumWalletBalance": 0
     },
