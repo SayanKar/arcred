@@ -129,6 +129,40 @@ impl Arcred {
     pub fn approved_lenders(&self, index: U256) -> Result<Address, Vec<u8>> {
         Ok(self.approved_lenders.get(index).unwrap())
     }
+
+    pub fn register_lender(&mut self, lender: Address) -> Result<(), Vec<u8>> {
+        self.only_owner();
+        assert_eq!(
+            self.is_lender(lender), 
+            Ok(false),
+            "Lender already approved"
+        );
+
+        let mut status = self.is_lender.setter(lender);
+        status.set(true);
+
+        self.approved_lenders.push(lender);
+        Ok(())
+    }
+
+    pub fn approve_lender(&mut self, lender: Address, approve: bool) -> Result<(), Vec<u8>> {
+        assert!(
+            self.is_lender.get(lender),
+            "The address provided is not a lender"
+        );
+
+        assert_eq!(
+            self.is_lender_approved(msg::sender(), lender),
+            Ok(approve),
+            "State already set"
+        );
+
+        let mut borrower_list = self.is_lender_approved.setter(msg::sender());
+        let mut status = borrower_list.setter(lender);
+        status.set(approve);
+        
+        Ok(())
+    }
 }
 
 // Modifiers
