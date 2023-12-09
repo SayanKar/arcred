@@ -85,6 +85,7 @@ contract Arcred {
     }
 
     function approveLender(address _lenderAddress, bool approve) public {
+        require(isLender[_lenderAddress], "The address provided is not a lender");
         require(isLenderApproved[msg.sender][_lenderAddress] != approve, "State already set");
         isLenderApproved[msg.sender][_lenderAddress] = approve;   
     }   
@@ -96,13 +97,44 @@ contract Arcred {
         lenderToLoanId[msg.sender].push(loanId);
         borrowerToLoanId[_borrower].push(loanId);
         // updateLoanStateAndBorrowerStats
-        return loanId;
     }
 
-    function closeLoan(uint256 loanId) isValidLender public {
-        require(loanId < nextLoanId, "Invalid loanId");
-        require(loanIdToLoanInfo[loanId].lender == msg.sender, "You need to be the lender for this loan to do this operation");
-        loanIdToLoanInfo[loanId].isActive = false;
+    function closeLoan(uint256 _loanId) isValidLender public {
+        require(_loanId < nextLoanId, "Invalid loanId");
+        require(loanIdToLoanInfo[_loanId].lender == msg.sender, "You need to be the lender for this loan to do this operation");
+        loanIdToLoanInfo[_loanId].isActive = false;
+        // updateLoanStateAndBorrowerStats
+    }
+
+    function getMyCreditReport() public view returns (CreditReport memory creditReport){
+        creditReport.borrowerStats = getBorrowerStats(msg.sender);
+        creditReport.loanIds = borrowerToLoanId[msg.sender];
+    }
+
+    function getLoanDataForLoanIds(uint256 [] calldata _loanIds) public view returns(LoanData[] memory loanDataList) {
+        loanDataList = new LoanData[](_loanIds.length);
+        for(uint i = 0; i < _loanIds.length; i++) {
+            uint256 loanId = _loanIds[i];
+            require( loanId < nextLoanId, "Invalid loanId");
+            require( loanIdToLoanInfo[loanId].borrower == msg.sender || isLenderApproved[loanIdToLoanInfo[loanId].borrower][msg.sender], 
+                "Do not have permission to do this query");
+            loanDataList[i] = (LoanData(loanIdToLoanInfo[loanId], loanIdToLoanState[loanId]));
+        }
+    }
+
+    function getBorrowerCreditReport(address _borrower) isValidLender hasApproval(_borrower) public view returns(CreditReport memory creditReport) {
+        creditReport.borrowerStats = getBorrowerStats(_borrower);
+        creditReport.loanIds = borrowerToLoanId[msg.sender];
+    }
+
+    // Todo:
+    function getBorrowerStats(address _borrower) internal view returns(BorrowerStats memory) {
+        return borrowerToBorrowerStats[_borrower];
+    }
+
+    function registerBorrowerActivity(uint256 _loanId, LoanState memory _loanState) isValidLender public {
+        require(loanIdToLoanInfo[_loanId].lender == msg.sender, "You need to be the lender of this loan to do this operation");
+        require(loanIdToLoanInfo[_loanId].isActive, "Loan is not active");
         // updateLoanStateAndBorrowerStats
     }
 }
