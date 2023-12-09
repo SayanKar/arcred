@@ -62,6 +62,19 @@ sol_storage! {
     }
 }
 
+pub type BorrowerStatsExpanded = (u16, U256, U256, U256);
+
+impl From<BorrowerStats> for BorrowerStatsExpanded {
+    fn from(borrower_stats: BorrowerStats) -> Self {
+        (
+            borrower_stats.credit_score.to::<u16>(),
+            borrower_stats.number_of_defaults.to::<U256>(),
+            borrower_stats.number_of_credit_lines.to::<U256>(),
+            borrower_stats.number_of_consumer_loans.to::<U256>(),
+        )
+    }
+}
+
 // Getters
 #[external]
 impl Arcred {
@@ -97,9 +110,13 @@ impl Arcred {
     //     Ok(*self.loan_id_to_loan_state.get(loan_id).deref())
     // }
 
-    // pub fn borrower_to_borrower_stats(&self, borrower: Address) -> Result<BorrowerStats, Vec<u8>> {
-    //     Ok(*self.borrower_to_borrower_stats.get(borrower).deref())
-    // }
+    pub fn borrower_to_borrower_stats(&self, borrower: Address) -> Result<BorrowerStatsExpanded, Vec<u8>> {
+        let borrower_stats = unsafe {
+            self.borrower_to_borrower_stats.get(borrower).into_raw()
+        };
+
+        Ok(borrower_stats.into())
+    }
 
     pub fn is_lender(&self, lender: Address) -> Result<bool, Vec<u8>> {
         Ok(self.is_lender.get(lender))
