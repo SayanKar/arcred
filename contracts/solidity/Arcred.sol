@@ -319,4 +319,8 @@ contract Arcred {
         }
         return result;
     }
+
+    function getApprovedLenders() public view returns(address[] memory approvedLendersList) {
+        approvedLendersList = approvedLenders;
+    }
 }
