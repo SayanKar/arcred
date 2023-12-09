@@ -1,13 +1,14 @@
 import './App.css';
-import {useUserContext} from "./contextProviders/UserContextProvider";
+import { useGlobalContext } from "./contextProviders/GlobalContextProvider";
 
 function App() {
-    const userContext = useUserContext();
-    console.log(userContext)
+    const globalContext = useGlobalContext();
+
     return (
-    <div>
-        {userContext.walletAddress}
-    </div>
+      <div>
+        {globalContext.account}
+        {globalContext.chainId}
+      </div>
     );
 }
 

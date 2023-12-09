@@ -39,7 +39,7 @@ function isValidChainId(chainId: string) {
         return response
     }
 
-    (supportedConfigs as ChainConfig[]).forEach((chain) => {
+    supportedConfigs.forEach((chain) => {
         if(chain.chainId.toLowerCase() === stringToHex(chainId.toString()).toLowerCase()) {
             response.isValid = true
             response.chain = chain
@@ -65,6 +65,7 @@ async function handleConnection(accounts: any) {
     return accounts;
 }
 
+// requests account access from users and fetch the first connected account
 async function requestAccount() {
     let currentAccount = '0x0';
     if (isEthereum() && getChainID() !== 0) {
@@ -75,6 +76,7 @@ async function requestAccount() {
     return currentAccount;
 }
 
+// returns balance for an account
 async function requestBalance(currentAccount: any) {
     let currentBalance;
     if (isEthereum()) {
@@ -94,6 +96,7 @@ async function requestBalance(currentAccount: any) {
     return { currentBalance, err: true };
 }
 
+// get all necessary params from the metamask like address, balance, chainId
 export const GetParams = async () => {
     const response = {
         isError: false,
@@ -101,45 +104,51 @@ export const GetParams = async () => {
         step: -1,
         balance: 0,
         account: '0x0',
-        chainId: '0x'
+        chainId: ''
     };
 
     if (!isEthereum()) {
         response.step = 0;
         return response;
     }
-    const currentAccount = await requestAccount();
-    if (currentAccount === '0x0') {
-        response.step = 1;
-        return response;
-    }
 
-    response.account = currentAccount;
+    try {
+        const currentAccount = await requestAccount();
+        if (currentAccount === '0x0') {
+            response.step = 1;
+            return response;
+        }
 
-    const {isValid, chain} = isValidChainId(getChainID())
+        response.account = currentAccount;
 
-    if (!isValid || !chain) {
-        response.step = 2;
-        return response;
-    }
-    response.chainId = chain.chainId
+        const {isValid, chain} = isValidChainId(getChainID())
 
-    const { currentBalance, err } = await requestBalance(currentAccount);
-    if (err) {
-        response.isError = true;
-        response.message = 'Error fetching balance!';
-        return response;
-    }
-    response.balance = currentBalance;
+        if (!isValid || !chain) {
+            response.step = 2;
+            return response;
+        }
+        response.chainId = chain.chainId
 
-    if (currentBalance < chain.minimumWalletBalance ?? 0) {
-        response.step = 3;
-        return response;
+        const { currentBalance, err } = await requestBalance(currentAccount);
+        if (err) {
+            response.isError = true;
+            response.message = 'Error fetching balance!';
+            return response;
+        }
+        response.balance = currentBalance;
+
+        if (currentBalance < chain.minimumWalletBalance ?? 0) {
+            response.step = 3;
+            return response;
+        }
+    } catch(err) {
+        console.log(err)
     }
 
     return response;
 };
 
+// swtiches network to a valid chain
 export async function switchNetwork(chainId: string) {
     const {isValid, chain} = isValidChainId(chainId)
     if(isValid) {
