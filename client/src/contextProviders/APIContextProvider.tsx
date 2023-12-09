@@ -38,7 +38,8 @@ export type BorrowerStats = {
     numberOfConsumerLoans: number,
 }
 
-export type CreditReport = BorrowerStats & {
+export type CreditReport = {
+    borrowerStats: BorrowerStats,
     loanData: LoanData[]
 }
 
@@ -133,7 +134,7 @@ export const APIContextProvider  = ({children}: {children: ReactNode})  => {
             if (parsedBs && !loanDataResponse.isError && loanDataResponse.item) {
                 response.isError = false
                 response.message = 'Success'
-                response.item = {...parsedBs, loanData: loanDataResponse.item}
+                response.item = {borrowerStats: {...parsedBs}, loanData: loanDataResponse.item}
                 return response
             }
         } catch(err) {

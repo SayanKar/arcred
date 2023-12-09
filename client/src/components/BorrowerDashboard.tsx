@@ -11,7 +11,7 @@ import {TextField} from "@mui/material";
 import Button from "@mui/material/Button";
 import * as React from "react";
 import {useEffect, useState} from "react";
-import {BorrowerStats, useApiContext} from "../contextProviders/APIContextProvider";
+import {BorrowerStats, LoanData, useApiContext} from "../contextProviders/APIContextProvider";
 import {useGlobalContext} from "../contextProviders/GlobalContextProvider";
 
 
@@ -63,6 +63,7 @@ export const BorrowerDashboard = () => {
 
     const [lenderAddress, setLenderAddress] = useState<string>('');
     const [creditReport, setCreditReport] = useState<BorrowerStats>({} as BorrowerStats);
+    const [loanData, setLoanData] = useState<LoanData[]>([]);
 
     useEffect(() => {
         //fetch credit report
@@ -70,7 +71,8 @@ export const BorrowerDashboard = () => {
             if(res.isError){
                 alert(res.message);
             }
-            setCreditReport(res.item!);
+            setCreditReport(res.item!.borrowerStats!);
+            setLoanData(res.item!.loanData!);
         })
 
         //fetch loan report
@@ -96,7 +98,7 @@ export const BorrowerDashboard = () => {
             Your loan history
         </Typography>
         <Grid2 xs display="flex" justifyContent="center" alignItems="center" flexDirection={"column"}>
-            {getLoanTable(sampleLoanData)}
+            {getLoanTable(loanData)}
         </Grid2>
 
 
@@ -148,6 +150,7 @@ const getLoanTable = (loanData: any) => {
             </TableHead>
             <TableBody>
                 {loanData.map((d: any, i: number) => <TableRow
+                    key={i}
                     sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                 >
                     <TableCell>{d.loanId}</TableCell>
