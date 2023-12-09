@@ -55,11 +55,11 @@ contract Arcred {
     uint256 public nextLoanId;              // Counter for generating unique loan IDs
 
     uint256 constant defaultScore = 500;
-    int256 constant creditUtilizationWeight = 40;
-    int256 constant defaultedAmountWeight = -30;
-    int256 constant numberOfDefaultsWeight = -30;
-    int256 constant creditMixWeight = 10;
-    int256 constant numberOfLoansWeight = -10;
+    int256 constant creditUtilizationWeight = 4;
+    int256 constant defaultedAmountWeight = -4;
+    int256 constant numberOfDefaultsWeight = -3;
+    int256 constant creditMixWeight = 1;
+    int256 constant numberOfLoansWeight = -1;
 
     // Mapping: borrower address to an array of loan IDs
     mapping(address => uint256[]) public borrowerToLoanId;
@@ -285,39 +285,27 @@ contract Arcred {
     */
     function calculateScore(address _borrower, uint256 _loanId) internal view returns (uint256 score) {
 
-
-        uint256 numberOfDefaults = borrowerToBorrowerStats[_borrower].numberOfDefaults;
-        uint256 normalizedDefaultedAmount = borrowerToBorrowerStats[_borrower].numberOfDefaults / 100;
-        uint256 normalizedNumberOfLoans = (borrowerToBorrowerStats[_borrower].numberOfCreditLines +  borrowerToBorrowerStats[_borrower].numberOfConsumerLoans) / 10;
-        uint256 creditMix = (borrowerToBorrowerStats[_borrower].numberOfConsumerLoans * 100) / (borrowerToBorrowerStats[_borrower].numberOfCreditLines +  borrowerToBorrowerStats[_borrower].numberOfConsumerLoans);
-        uint256 creditUtilizationRatio = (loanIdToLoanState[_loanId].unsettledAmount * 100) / loanIdToLoanInfo[_loanId].sanctionedAmount;
+        int256 numberOfDefaults = int256(borrowerToBorrowerStats[_borrower].numberOfDefaults);
+        int256 numberOfLoans = int256(borrowerToBorrowerStats[_borrower].numberOfCreditLines + borrowerToBorrowerStats[_borrower].numberOfConsumerLoans);
+        int256 creditMix = int256((borrowerToBorrowerStats[_borrower].numberOfCreditLines * 100) / (borrowerToBorrowerStats[_borrower].numberOfCreditLines +  borrowerToBorrowerStats[_borrower].numberOfConsumerLoans));
+        int256 creditUtilizationRatio = int256((loanIdToLoanState[_loanId].unsettledAmount * 100) / loanIdToLoanInfo[_loanId].sanctionedAmount);
         int256 currCreditUtilizationWeight = creditUtilizationWeight;
         if(loanIdToLoanInfo[_loanId].loanType == LoanType.CONSUMER_LINE) {
             currCreditUtilizationWeight = 0;
         }
-        int256 creditScore = int256(defaultScore) +
-            ((creditUtilizationWeight * int256(100 - creditUtilizationRatio)) / 100) +
-            (defaultedAmountWeight * int256(100 - normalizedDefaultedAmount)) +
-            (numberOfDefaultsWeight * int256(exp(-int256(numberOfDefaults)))) +
-            (creditMixWeight * int256(creditMix)) + (numberOfLoansWeight * int256(100 - normalizedNumberOfLoans));
-
+        int256 creditScore = int256(borrowerToBorrowerStats[_borrower].creditScore) +
+         ((creditUtilizationWeight * (30 - creditUtilizationRatio)) + 
+         (numberOfLoansWeight * numberOfLoans) + 
+         (creditMixWeight * (30 - creditMix)) + 
+         (defaultedAmountWeight * int256((loanIdToLoanState[_loanId].defaultAmount * 100) / loanIdToLoanInfo[_loanId].sanctionedAmount)) +
+         (numberOfDefaultsWeight * numberOfDefaults)) / 20;
+            
         if (creditScore < 300) {
             return 300;
         } else if (creditScore > 900) {
             return 900;
         }
         return uint256(creditScore);
-    }
-
-
-    // Helper function to calculate the exponential function e^x
-    function exp(int256 x) internal pure returns (int256) {
-        int256 result = 1e18; // 1 in fixed-point representation
-
-        for (int256 i = 1; i <= 10; i++) {
-            result += (result * x) / (1e18 * i);
-        }
-        return result;
     }
 
     function getApprovedLenders() public view returns(address[] memory approvedLendersList) {
