@@ -2,7 +2,7 @@ import React, {createContext, ReactNode, useContext } from 'react';
 import { useGlobalContext } from './GlobalContextProvider';
 
 interface IAPIContext {
-    getMyCreditReport: () => Promise<ResponseType<BorrowerStats>>,
+    getMyCreditReport: () => Promise<ResponseType<CreditReport>>,
     approveLender: (lenderAddress: string, shouldApprove: boolean) => Promise<ResponseType<void>>,
     getBorrowerCreditReport: (borrowerAddress: string) => Promise<ResponseType<BorrowerStats>>,
     registerLoan: (loanType: number, description: string, amount: number, borrowerAddress: string) => Promise<ResponseType<number>>,
