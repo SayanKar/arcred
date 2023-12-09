@@ -1,19 +1,25 @@
 import './App.css';
 import {UIState, useGlobalContext} from "./contextProviders/GlobalContextProvider";
 import {CircularProgress} from "@mui/material";
-import {NetworkSelector} from "./pages/NetworkSelector";
+import {NetworkSelector, supportedNetworksConfig} from "./pages/NetworkSelector";
 import {getMetaMaskConnectionStatus, MetaMaskConnector} from "./pages/MetaMaskConnector";
 import {useEffect} from "react";
+import {Dashboard} from "./pages/Dashboard";
+import chainConfig from "./onboarding/config.json";
 
 function App() {
     const globalContext = useGlobalContext();
     const {uiState, step: currentMetamaskStep} = globalContext;
 
     useEffect(() => {
-        console.log({globalContext})
         const connectionStatus = getMetaMaskConnectionStatus(currentMetamaskStep);
         if(connectionStatus.isConnected){
-            globalContext.setUIState(UIState.REQUEST_NETWORK_SELECTION)
+            if(supportedNetworksConfig.filter(config => config.chainId == globalContext.chainId).length){
+                globalContext.setUIState(UIState.DISPLAY_DASHBOARD)
+
+            } else {
+                globalContext.setUIState(UIState.REQUEST_NETWORK_SELECTION)
+            }
         }else {
             globalContext.setUIState(UIState.REQUEST_METAMASK_CONNECTION)
         }
@@ -24,16 +30,15 @@ function App() {
 
 const getUIContentByUIState = (uiState: UIState) => {
     switch (uiState) {
-        case UIState.LOADING:
-            return <CircularProgress />
         case UIState.REQUEST_METAMASK_CONNECTION:
             return <MetaMaskConnector />;
         case UIState.REQUEST_NETWORK_SELECTION:
             return <NetworkSelector />;
         case UIState.DISPLAY_DASHBOARD:
-            return <></>;
+            return <Dashboard />;
+        case UIState.LOADING:
         default:
-            return <></>;
+            return <CircularProgress />
     }
 }
 
