@@ -7,7 +7,7 @@ extern crate alloc;
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 /// Import the Stylus SDK along with alloy primitive types for use in our program.
-use stylus_sdk::prelude::*;
+use stylus_sdk::{prelude::*, msg};
 use alloy_primitives::{Address, U256};
 
 // Define the entrypoint as a Solidity storage object, The sol_storage! macro
@@ -128,5 +128,31 @@ impl Arcred {
 
     pub fn approved_lenders(&self, index: U256) -> Result<Address, Vec<u8>> {
         Ok(self.approved_lenders.get(index).unwrap())
+    }
+}
+
+// Modifiers
+impl Arcred {
+    fn only_owner(&self) {
+        assert_eq!(
+            msg::sender(), 
+            self.admin.get(), 
+            "You need to be Admin to do this operation"
+        )
+    }
+
+    fn is_valid_lender(&self) {
+        assert!(
+            self.is_lender.get(msg::sender()),
+            "You need to be a lender to do this operation"
+        )
+    }
+
+    fn has_approval(&self, borrower: Address) {
+        assert_eq!(
+            self.is_lender_approved(borrower, msg::sender()),
+            Ok(true),
+            "You need to be a approved lender for the address to do this operation"
+        )
     }
 }
