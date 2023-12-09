@@ -1,4 +1,4 @@
-import React, {createContext, ReactNode, useContext, useEffect, useState} from 'react';
+import React, {createContext, ReactNode, useContext } from 'react';
 import { useGlobalContext } from './GlobalContextProvider';
 
 interface IAPIContext {
@@ -9,20 +9,26 @@ interface IAPIContext {
     reportBorrowerActivity?: (loanId: number, unsettledAmount: number, defaultAmount: number, lastUpdated: number) => Promise<ResponseType<number>>,
     closeLoan?: (loanId: number) => Promise<ResponseType<void>>,
     registerLender?: (lenderAddress: string) => Promise<ResponseType<void>>,
+
+    isLenderApprovedByCurrentAccount?: (lenderAddress: string) => Promise<ResponseType<boolean>>,
+    getLoanDataFromLoanIds?: (loanIds: number[]) => Promise<ResponseType<any>>,
+    isLender?: (lenderAddress: string) => Promise<ResponseType<boolean>>,
+    getLoanIdsOfLender?: (lenderAddress: string) => Promise<ResponseType<string[]>>,
+    getLoanIdsOfBorrower?: (borrowerAddress: string) => Promise<ResponseType<string[]>>,
 }
 
 const APIContext = createContext<IAPIContext>({});
 export const useApiContext = () => useContext(APIContext);
 
 export type LoanInfo = {
-    loanId: number,
+    loanId: string,
     type: number,
     desc: string,
-    creationTime: number,
-    sanctionedAmount: number,
+    creationTime: string,
+    sanctionedAmount: string,
     lender: string,
     borrower: string,
-    isActive: boolean, 
+    isActive: boolean,
 }
 
 export type BorrowerStats = {
@@ -33,11 +39,13 @@ export type BorrowerStats = {
 }
 
 export type LoanState = {
-    loanId: number,
+    loanId: string,
     unsettledAmount: number,
     defaultAmount: number,
     lastUpdated: number,
 }
+
+export type LoanData = LoanInfo & LoanState
 
 export type ResponseType<T> = {
     isError: boolean,
@@ -59,8 +67,49 @@ function parseBorrowerStats(bS: any): BorrowerStats | undefined {
     return undefined
 }
 
+function parseLoanDatas(loanDatas: any): LoanData[] {
+    const parsedLoanDatas: LoanData[] = []
+
+    if (Array.isArray(loanDatas)) {
+        loanDatas.forEach((loanData) => {
+            if (
+                loanData &&
+                loanData.loanInfo &&
+                loanData.loanState &&
+                typeof loanData.loanInfo.loanType === 'number' &&
+                typeof loanData.loanInfo.creationTime === 'object' &&
+                typeof loanData.loanInfo.sanctionedAmount === 'object' &&
+                typeof loanData.loanState.loanId === 'object' &&
+                typeof loanData.loanState.unsettledAmount === 'object' &&
+                typeof loanData.loanState.defaultAmount === 'object' &&
+                typeof loanData.loanState.lastUpdated === 'object' &&
+                typeof loanData.loanInfo.desc === 'string' && loanData.loanInfo.desc.length >= 0 &&
+                typeof loanData.loanInfo.lender === 'string' && loanData.loanInfo.lender.length >= 0 &&
+                typeof loanData.loanInfo.borrower === 'string' && loanData.loanInfo.borrower.length >= 0 &&
+                typeof loanData.loanInfo.isActive === 'boolean'
+            ) {
+                parsedLoanDatas.push({
+                    desc: loanData.loanInfo.desc,
+                    lender: loanData.loanInfo.lender,
+                    borrower: loanData.loanInfo.borrower,
+                    isActive: loanData.loanInfo.isActive,
+                    type: loanData.loanInfo.loanType,
+                    creationTime: loanData.loanInfo.creationTime.toString(),
+                    sanctionedAmount: loanData.loanInfo.sanctionedAmount.toString(),
+                    loanId: loanData.loanState.loanId.toString(),
+                    unsettledAmount: loanData.loanState.unsettledAmount.toString(),
+                    defaultAmount: loanData.loanState.defaultAmount.toString(),
+                    lastUpdated: loanData.loanState.lastUpdated.toString(),
+                })
+            }
+        })
+    }
+
+    return parsedLoanDatas
+}
+
 export const APIContextProvider  = ({children}: {children: ReactNode})  => {
-    const { contract } = useGlobalContext();
+    const { contract, account } = useGlobalContext();
 
     /**
      * FOR USERS
@@ -200,6 +249,90 @@ export const APIContextProvider  = ({children}: {children: ReactNode})  => {
         return response
     }
 
+    /**
+     * HELPER FUNCTIONs
+    */
+    async function isLenderApprovedByCurrentAccount(lenderAddress: string): Promise<ResponseType<boolean>> {
+        const response: ResponseType<boolean> = { isError: true, message: 'Internal error', item: undefined }
+        try {
+            const isApproved = await contract?.isLenderApproved?.(lenderAddress, account)
+            response.isError = false
+            response.message = 'Success'
+            response.item = isApproved
+            return response
+        } catch(err) {
+            console.log('error: isApprovedLender:', err)
+            response.message = 'Error while fetching approved lender. See logs'
+        }
+
+        return response
+    }
+
+    async function isLender(lenderAddress: string): Promise<ResponseType<boolean>> {
+        const response: ResponseType<boolean> = { isError: true, message: 'Internal error', item: undefined }
+        try {
+            const isLenderResponse = await contract?.isLender?.(lenderAddress)
+            response.isError = false
+            response.message = 'Success'
+            response.item = isLenderResponse
+            return response
+        } catch(err) {
+            console.log('error: isLender:', err)
+            response.message = 'Error while fetching is lender response. See logs'
+        }
+
+        return response
+    }
+
+    async function getLoanDataFromLoanIds(loanIds: number[]): Promise<ResponseType<LoanData[]>> {
+        const response: ResponseType<LoanData[]> = { isError: true, message: 'Internal error', item: undefined }
+        try {
+            const loanDatas = await contract?.getLoanDataForLoanIds?.(loanIds)
+            const parsedLoanDatas = parseLoanDatas(loanDatas)
+            response.isError = false
+            response.message = 'Success'
+            response.item = parsedLoanDatas
+            return response
+        } catch(err) {
+            console.log('error: getLoanDataFromLoanIds:', err)
+            response.message = 'Error while fetching loan data. See logs'
+        }
+
+        return response
+    }
+
+    async function getLoanIdsOfLender(lenderAddress: string): Promise<ResponseType<string[]>> {
+        const response: ResponseType<string[]> = { isError: true, message: 'Internal error', item: undefined }
+        try {
+            const loanIds = await contract?.lenderToLoanId?.(lenderAddress)
+            response.isError = false
+            response.message = 'Success'
+            response.item = loanIds
+            return response
+        } catch(err) {
+            console.log('error: getLoanIdsOfLender:', err)
+            response.message = 'Error while fetching loan ids for the lender. See logs'
+        }
+
+        return response
+    }
+
+    async function getLoanIdsOfBorrower(borrowerAddress: string): Promise<ResponseType<string[]>> {
+        const response: ResponseType<string[]> = { isError: true, message: 'Internal error', item: undefined }
+        try {
+            const loanIds = await contract?.borrowerToLoanId?.(borrowerAddress)
+            response.isError = false
+            response.message = 'Success'
+            response.item = loanIds
+            return response
+        } catch(err) {
+            console.log('error: getLoanIdsOfBorrower:', err)
+            response.message = 'Error while fetching loan ids for the borrower. See logs'
+        }
+
+        return response
+    }
+
     return (
         <APIContext.Provider value={{
             getMyCreditReport,
@@ -211,6 +344,12 @@ export const APIContextProvider  = ({children}: {children: ReactNode})  => {
             closeLoan,
 
             registerLender,
+
+            isLenderApprovedByCurrentAccount,
+            getLoanDataFromLoanIds,
+            isLender,
+            getLoanIdsOfLender,
+            getLoanIdsOfBorrower,
         }}>
             {children}
         </APIContext.Provider>
