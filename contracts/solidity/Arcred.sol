@@ -186,6 +186,6 @@ contract Arcred {
     }
 
     function calculateScore(address _borrower, uint256 loanId) internal returns (uint16) {
-        return (400);
+        return borrowerToBorrowerStats[_borrower].creditScore - 5;
     }
 }
