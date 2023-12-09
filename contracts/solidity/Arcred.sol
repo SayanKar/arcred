@@ -61,6 +61,7 @@ contract Arcred {
         admin = msg.sender;
         creditLineCooldownPeriod = _creditLineCooldownPeriod;
         consumerLoanCooldownPeriod = _consumerLoanCooldownPeriod;
+        nextLoanId = 1;
     }
 
     modifier onlyAdmin() {
@@ -96,7 +97,18 @@ contract Arcred {
         loanIdToLoanInfo[loanId] = LoanInfo(loanId, _loanType, _desc, block.timestamp, _amount, msg.sender, _borrower, true);
         lenderToLoanId[msg.sender].push(loanId);
         borrowerToLoanId[_borrower].push(loanId);
+        initializeBorrowerStatsIfEmpty(_borrower);
+        initializeLoanStateIfEmpty(loanId);
         // updateLoanStateAndBorrowerStats
+        if( _loanType == LoanType.CREDIT_LINE) {
+            borrowerToBorrowerStats[_borrower].numberOfCreditLines++;
+        } else {
+            borrowerToBorrowerStats[_borrower].numberOfConsumerLoans++;
+            loanIdToLoanState[loanId].unsettledAmount = _amount;
+            loanIdToLoanState[loanId].lastUpdated = block.timestamp;
+        }
+        borrowerToBorrowerStats[_borrower].creditScore = calculateScore(_borrower, loanId);
+
     }
 
     function closeLoan(uint256 _loanId) isValidLender public {
@@ -104,9 +116,19 @@ contract Arcred {
         require(loanIdToLoanInfo[_loanId].lender == msg.sender, "You need to be the lender for this loan to do this operation");
         loanIdToLoanInfo[_loanId].isActive = false;
         // updateLoanStateAndBorrowerStats
+        address borrower = loanIdToLoanInfo[_loanId].borrower;
+        if( loanIdToLoanInfo[_loanId].loanType == LoanType.CREDIT_LINE) {
+            borrowerToBorrowerStats[borrower].numberOfCreditLines--;
+        } else {
+            borrowerToBorrowerStats[borrower].numberOfConsumerLoans--;
+        }
+        loanIdToLoanState[_loanId].unsettledAmount = 0;
+        loanIdToLoanState[_loanId].defaultAmount = 0;
+        loanIdToLoanState[_loanId].lastUpdated = block.timestamp;
+        borrowerToBorrowerStats[borrower].creditScore = calculateScore(borrower, _loanId);
     }
 
-    function getMyCreditReport() public view returns (CreditReport memory creditReport){
+    function getMyCreditReport() public returns (CreditReport memory creditReport){
         creditReport.borrowerStats = getBorrowerStats(msg.sender);
         creditReport.loanIds = borrowerToLoanId[msg.sender];
     }
@@ -122,19 +144,48 @@ contract Arcred {
         }
     }
 
-    function getBorrowerCreditReport(address _borrower) isValidLender hasApproval(_borrower) public view returns(CreditReport memory creditReport) {
+    function getBorrowerCreditReport(address _borrower) isValidLender hasApproval(_borrower) public returns(CreditReport memory creditReport) {
         creditReport.borrowerStats = getBorrowerStats(_borrower);
         creditReport.loanIds = borrowerToLoanId[msg.sender];
     }
 
-    // Todo:
-    function getBorrowerStats(address _borrower) internal view returns(BorrowerStats memory) {
+    function getBorrowerStats(address _borrower) internal returns(BorrowerStats memory) {
+        initializeBorrowerStatsIfEmpty(_borrower);
         return borrowerToBorrowerStats[_borrower];
     }
+
+    function initializeBorrowerStatsIfEmpty(address _borrower) internal {
+        if(borrowerToBorrowerStats[_borrower].creditScore == 0) {
+            borrowerToBorrowerStats[_borrower] = BorrowerStats(500, 0, 0, 0);
+        }
+    } 
+
+    function initializeLoanStateIfEmpty(uint256 _loanId) internal {
+        if(loanIdToLoanState[_loanId].loanId == 0) {
+            loanIdToLoanState[_loanId] = LoanState(_loanId, 0, 0, 0);
+        }
+    }
+
 
     function registerBorrowerActivity(uint256 _loanId, LoanState memory _loanState) isValidLender public {
         require(loanIdToLoanInfo[_loanId].lender == msg.sender, "You need to be the lender of this loan to do this operation");
         require(loanIdToLoanInfo[_loanId].isActive, "Loan is not active");
-        // updateLoanStateAndBorrowerStats
+        if (loanIdToLoanInfo[_loanId].loanType == LoanType.CREDIT_LINE) {
+            require(loanIdToLoanState[_loanId].lastUpdated + creditLineCooldownPeriod <= block.timestamp, "Cooldown period not over");
+        } else {
+            require(loanIdToLoanState[_loanId].lastUpdated + consumerLoanCooldownPeriod <= block.timestamp, "Cooldown period not over");
+        }
+        address borrower = loanIdToLoanInfo[_loanId].borrower;
+        loanIdToLoanState[_loanId].unsettledAmount = _loanState.unsettledAmount;
+        loanIdToLoanState[_loanId].defaultAmount = _loanState.defaultAmount;        
+        if(_loanState.defaultAmount != 0) {
+            borrowerToBorrowerStats[borrower].numberOfDefaults++;
+        }
+        loanIdToLoanState[_loanId].lastUpdated = block.timestamp;
+        borrowerToBorrowerStats[borrower].creditScore = calculateScore(borrower, _loanId);    
+    }
+
+    function calculateScore(address _borrower, uint256 loanId) internal returns (uint16) {
+        return (400);
     }
 }
