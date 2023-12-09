@@ -21,9 +21,10 @@ interface INetworksConfig {
     "minimumWalletBalance": number
 }
 
-const supportedNetworksConfig: INetworksConfig[] = chainConfig;
+export const supportedNetworksConfig: INetworksConfig[] = chainConfig;
 
 export const NetworkSelector = (props: INetworkSelectorProps) => {
+
     return <Layout>
         <Typography sx={{ mt: 4, mb: 2 }} variant="h6" component="div">
             List of supported networks
@@ -50,7 +51,6 @@ const NetworkDetailsItem = (networkConfig: INetworksConfig) => {
 
     const networkSwitchHandler = async () => {
         await switchNetwork(networkConfig.chainId)
-        console.log("switchind")
         setUIState(UIState.DISPLAY_DASHBOARD);
     }
 
