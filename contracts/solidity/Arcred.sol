@@ -3,11 +3,17 @@
 pragma solidity >= 0.8.20 <0.9.0;
 
 contract Arcred {
+
+    enum LoanType {
+        CREDIT_LINE,
+        CONSUMER_LINE
+    }
+
     struct LoanInfo {
         uint256 loanId;
-        uint8 loanType;
+        LoanType loanType;
         string desc;
-        uint64 creationTime;
+        uint256 creationTime;
         uint256 sanctionedAmount;
         address lender;
         address borrower;
@@ -18,7 +24,7 @@ contract Arcred {
         uint256 loanId;
         uint256 unsettledAmount;
         uint256 defaultAmount;
-        uint64 lastUpdated;
+        uint256 lastUpdated;
     }
 
     struct BorrowerStats {
@@ -28,12 +34,12 @@ contract Arcred {
         uint256 numberOfConsumerLoans;
     }
 
-    address admin;
+    address public admin;
     uint64 public creditLineCooldownPeriod;
     uint64 public consumerLoanCooldownPeriod;
     uint256 public nextLoanId;
-    mapping(address => uint256 []) public borrowerToCreditId;
-    mapping(address => uint256 []) public lenderToCreditId;
+    mapping(address => uint256 []) public borrowerToLoanId;
+    mapping(address => uint256 []) public lenderToLoanId;
     mapping(uint256 => LoanInfo) public loanIdToLoanInfo;
     mapping(uint256 => LoanState) public loanIdToLoanState;
     mapping(address => BorrowerStats) public borrowerToBorrowerStats;
@@ -52,6 +58,16 @@ contract Arcred {
         _;
     }
 
+    modifier isValidLender() {
+        require(isLender[msg.sender], "You need to be a lender to do this operation");
+        _;
+    }
+
+    modifier hasApproval(address _borrower) {
+        require(isLenderApproved[_borrower][msg.sender], "You need to be a approved lender for the address to do this operation");
+        _;
+    }
+
     function registerLender(address _lenderAddress) onlyAdmin public {
         require(!isLender[_lenderAddress], "Lender already approved");
         isLender[_lenderAddress] = true;
@@ -62,4 +78,14 @@ contract Arcred {
         require(isLenderApproved[msg.sender][_lenderAddress] != approve, "State already set");
         isLenderApproved[msg.sender][_lenderAddress] = approve;   
     }   
+
+    function registerLoan(LoanType _loanType, string calldata _desc, uint256 _amount, address _borrower) isValidLender hasApproval(_borrower) public returns (uint256 loanId) {
+        isLenderApproved[_borrower][msg.sender] = false;
+        loanId = nextLoanId++;
+        loanIdToLoanInfo[loanId] = LoanInfo(loanId, _loanType, _desc, block.timestamp, _amount, msg.sender, _borrower, true);
+        lenderToLoanId[msg.sender].push(loanId);
+        borrowerToLoanId[_borrower].push(loanId);
+        // updateLoanStateAndBorrowerStats
+        return loanId;
+    }
 }
