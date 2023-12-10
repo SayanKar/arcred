@@ -11,7 +11,7 @@ export const AdminDashboard = () => {
     }
 
     const handleSubmit = async () => {
-        // if(prevSubmitInProgress) return;
+        if(prevSubmitInProgress) return;
         console.log("InSubmit");
         setPrevSubmitInProgress(true);
         alert("Register Lender: Submitting transaction");
