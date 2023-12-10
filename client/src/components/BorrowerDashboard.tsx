@@ -58,8 +58,7 @@ export const BorrowerDashboard = () => {
             lastUpdated: "515115"}
     ]
 
-    const {account} = useGlobalContext();
-    const {getMyCreditReport, getLoanIdsOfBorrower, getLoanDataFromLoanIds} = useApiContext();
+    const {getMyCreditReport, approveLender} = useApiContext();
 
     const [lenderAddress, setLenderAddress] = useState<string>('');
     const [creditReport, setCreditReport] = useState<BorrowerStats>({} as BorrowerStats);
@@ -79,19 +78,44 @@ export const BorrowerDashboard = () => {
 
     }, []);
 
-    const handleLenderAllowlist = () => {
-
+    const handleLenderAllowlist = async () => {
+        if (lenderAddress) {
+            const res = await approveLender(lenderAddress, true)
+            if (!res.isError) {
+                alert('Successfull!')
+            } else {
+                alert(res.message)
+            }
+        }
     }
 
     return <>
         <Typography sx={{ mt: 4, mb: 2 }} variant="h6" component="div" marginTop={2}>
             Your credit report
         </Typography>
-        <Grid2 xs display="flex" justifyContent="center" alignItems="center" flexDirection={"column"}>
-            {getDataTable(Object.keys(creditReport).map(k => {
-                // @ts-ignore
-                return {attrName: k, val: creditReport[k]}
-            }))}
+        <Grid2 xs sx={{width: '700px'}} display="flex" justifyContent="center" alignItems="center" flexDirection={"column"}>
+            {
+                getDataTable([
+                    {
+                        attrName: 'Credit Score',
+                        val: creditReport.creditScore?.toString(),
+                    },
+                    {
+                        attrName: 'Number of Defaults',
+                        val: creditReport.numberOfDefaults?.toString(),
+                    },
+                    {
+                        attrName: 'Number of Consumer Loans',
+                        val: creditReport?.numberOfConsumerLoans?.toString(),
+                    },
+                    {
+                        attrName: 'Number of Credit Lines',
+                        val: creditReport?.numberOfCreditLines?.toString(),
+                    }
+                ])
+            }
+
+
         </Grid2>
 
         <Typography sx={{ mt: 4, mb: 2 }} variant="h6" component="div" marginTop={2}>
@@ -107,7 +131,8 @@ export const BorrowerDashboard = () => {
         </Typography>
 
         <Grid2 xs >
-            <TextField id="lender's account id" label="Lender's Account Id" variant="outlined" onChange={(e) => {setLenderAddress(e.target.value)}}/>
+            <TextField sx={{ width: '500px' }} id="lender's account id" label="Lender's Account Id" variant="outlined" onChange={(e) => {setLenderAddress(e.target.value)}}/>
+            <br/><br/>
             <Button color="success" variant="outlined" onClick={handleLenderAllowlist}>Allow</Button>
         </Grid2>
     </>
@@ -160,7 +185,7 @@ const getLoanTable = (loanData: any) => {
                     <TableCell align="right">{d.sanctionedAmount}</TableCell>
                     <TableCell align="right">{d.lender}</TableCell>
                     <TableCell align="right">{d.borrower}</TableCell>
-                    <TableCell align="right">{d.isActive}</TableCell>
+                    <TableCell align="right">{d.isActive.toString()}</TableCell>
                     <TableCell align="right">{d.unsettledAmount}</TableCell>
                     <TableCell align="right">{d.defaultAmount}</TableCell>
                     <TableCell align="right">{d.lastUpdated}</TableCell>
