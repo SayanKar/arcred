@@ -16,73 +16,26 @@ import { useGlobalContext } from "../contextProviders/GlobalContextProvider";
 
 
 export const BorrowerDashboard = () => {
-    const sampleData = [
-        { attrName: "Credit Score", val: "12" },
-        { attrName: "Number of defaults", val: "12" },
-        { attrName: "Number of credit line loans", val: "12" },
-        { attrName: "Number of consumer loans", val: "12" },
-    ]
-    const sampleLoanData = [
-        {
-            loanId: "ad",
-            type: "faf",
-            desc: "HJH hjfa",
-            creationTime: "46176748",
-            sanctionedAmount: "4154362",
-            lender: "Sameer",
-            borrower: "Raj",
-            isActive: "Yes",
-            unsettledAmount: "41515",
-            defaultAmount: "13553",
-            lastUpdated: "515115"
-        },
-        {
-            loanId: "ad",
-            type: "faf",
-            desc: "HJH hjfa",
-            creationTime: "46176748",
-            sanctionedAmount: "4154362",
-            lender: "Sameer",
-            borrower: "Raj",
-            isActive: "Yes",
-            unsettledAmount: "41515",
-            defaultAmount: "13553",
-            lastUpdated: "515115"
-        },
-        {
-            loanId: "ad",
-            type: "faf",
-            desc: "HJH hjfa",
-            creationTime: "46176748",
-            sanctionedAmount: "4154362",
-            lender: "Sameer",
-            borrower: "Raj",
-            isActive: "Yes",
-            unsettledAmount: "41515",
-            defaultAmount: "13553",
-            lastUpdated: "515115"
-        }
-    ]
-
-    const { getMyCreditReport, approveLender } = useApiContext();
+    const {contract} = useGlobalContext();
+    const {getMyCreditReport, approveLender} = useApiContext();
 
     const [lenderAddress, setLenderAddress] = useState<string>('');
     const [creditReport, setCreditReport] = useState<BorrowerStats>({} as BorrowerStats);
     const [loanData, setLoanData] = useState<LoanData[]>([]);
 
     useEffect(() => {
-        //fetch credit report
-        getMyCreditReport().then(res => {
-            if (res.isError) {
-                alert(res.message);
-            }
-            setCreditReport(res.item!.borrowerStats!);
-            setLoanData(res.item!.loanData!);
-        })
-
-        //fetch loan report
-
-    }, []);
+        if (contract) {
+            //fetch credit report
+            getMyCreditReport().then(res => {
+                if(res.isError){
+                    alert(res.message);
+                    return
+                }
+                setCreditReport(res.item!.borrowerStats!);
+                setLoanData(res.item!.loanData!);
+            })
+        }
+    }, [contract]);
 
     const handleLenderAllowlist = async () => {
         if (lenderAddress) {
