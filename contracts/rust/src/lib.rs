@@ -6,8 +6,9 @@ extern crate alloc;
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
+use alloy_primitives::U8;
 /// Import the Stylus SDK along with alloy primitive types for use in our program.
-use stylus_sdk::{prelude::*, msg};
+use stylus_sdk::{prelude::*, msg, block};
 use stylus_sdk::alloy_primitives::{Address, U256};
 
 // Define the entrypoint as a Solidity storage object, The sol_storage! macro
@@ -79,7 +80,7 @@ sol_storage! {
         mapping(uint256 => uint256) loan_id_to_last_updated;
 
         // BorrowerStats
-        mapping(address => uint16) borrower_to_credit_score;
+        mapping(address => uint256) borrower_to_credit_score;
         mapping(address => uint256) borrower_to_number_of_defaults;
         mapping(address => uint256) borrower_to_number_of_credit_lines;
         mapping(address => uint256) borrower_to_number_of_consumer_loans;
@@ -176,6 +177,44 @@ impl Arcred {
         
         Ok(())
     }
+
+    pub fn registerLoan(
+        &mut self,
+        loan_type: u8,
+        desc: String,
+        amount: U256,
+        borrower: Address,
+    ) -> Result<U256, Vec<u8>> {
+        self.is_valid_lender();
+        self.has_approval(borrower);
+
+        let loan_id = self.next_loan_id.get();
+        self.loan_id_to_loan_type.setter(loan_id).set(U8::from(loan_type));
+        self.loan_id_to_desc.setter(loan_id).set_str(desc);
+        self.loan_id_to_creation_time.setter(loan_id).set(U256::from(block::timestamp()));
+        self.loan_id_to_sanctioned_amount.setter(loan_id).set(amount);
+        self.loan_id_to_lender.setter(loan_id).set(msg::sender());
+        self.loan_id_to_borrower.setter(loan_id).set(borrower);
+
+        self.lender_to_loan_id.setter(msg::sender()).push(loan_id); // grow?
+        self.borrower_to_loan_id.setter(borrower).push(loan_id); // grow?
+
+        self.initialize_borrower_stats_if_empty(borrower);
+
+        // Update loan state and borrower stats
+        if loan_type == 0 {
+            let count = self.borrower_to_number_of_credit_lines.get(borrower);
+            self.borrower_to_number_of_credit_lines.setter(borrower).set(count + U256::from(1));
+        } else {
+            let count = self.borrower_to_number_of_consumer_loans.get(borrower);
+            self.borrower_to_number_of_consumer_loans.setter(borrower).set(count + U256::from(1));
+        }
+
+        let credit_score = self.calculate_score(borrower, loan_id);
+        self.borrower_to_credit_score.setter(borrower).set(credit_score);
+
+        Ok(loan_id)
+    }
 }
 
 // Modifiers
@@ -201,5 +240,15 @@ impl Arcred {
             Ok(true),
             "You need to be a approved lender for the address to do this operation"
         )
+    }
+
+    fn initialize_borrower_stats_if_empty(&mut self, borrower: Address) {
+        if self.borrower_to_credit_score.get(borrower) == U256::ZERO {
+            self.borrower_to_credit_score.setter(borrower).set(U256::from(500));
+        }
+    }
+
+    fn calculate_score(&self, borrower: Address, loan_id: U256) -> U256 {
+        todo!()
     }
 }
