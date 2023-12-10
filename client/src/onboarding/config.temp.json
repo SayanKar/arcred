@@ -1,5 +1,14 @@
 [
     {
+        "chainId": "0xA869",
+        "chainName": "Avalanche Fuji Testnet",
+        "symbol": "AVAX",
+        "decimals": 18,
+        "rpcUrls": ["https://api.avax-test.network/ext/bc/C/rpc"],
+        "blockExplorerUrls": ["https://testnet.snowtrace.io"],
+        "minimumWalletBalance": 0
+    },
+    {
         "chainId": "0x1389",
         "chainName": "Mantle Testnet",
         "symbol": "MNT",
@@ -18,12 +27,21 @@
         "minimumWalletBalance": 0
     },
     {
-        "chainId": "0x8274F",
+        "chainId": "0x82751",
         "chainName": "Scroll Sepolia",
         "symbol": "ETH",
         "decimals": 18,
         "rpcUrls": ["https://sepolia-rpc.scroll.io/"],
         "blockExplorerUrls": ["https://sepolia.scrollscan.com"],
+        "minimumWalletBalance": 0
+    },
+    {
+        "chainId": "0x13881",
+        "chainName": "Polygon Mumbai",
+        "symbol": "MATIC",
+        "decimals": 18,
+        "rpcUrls": ["https://rpc-mumbai.matic.today"],
+        "blockExplorerUrls": ["https://mumbai.polygonscan.com/"],
         "minimumWalletBalance": 0
     }
 ]
