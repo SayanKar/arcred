@@ -1,29 +1,47 @@
 [
     {
-        "chainId": "0x5",
-        "chainName": "Goerli Testnet",
-        "symbol": "gETH",
-        "decimals": 18,
-        "rpcUrls": ["https://goerli.blockpi.network/v1/rpc/public/"],
-        "blockExplorerUrls": ["https://polygonscan.com/"],
-        "minimumWalletBalance": 0
-    },
-    {
-        "chainId": "0x507",
-        "chainName": "Moonbeam Testnet",
-        "symbol": "DEV",
-        "decimals": 18,
-        "rpcUrls": ["https://moonbase-alpha.public.blastapi.io"],
-        "blockExplorerUrls": ["https://moonbase-blockscout.testnet.moonbeam.network/"],
-        "minimumWalletBalance": 0
-    },
-    {
         "chainId": "0xA869",
         "chainName": "Avalanche Fuji Testnet",
         "symbol": "AVAX",
         "decimals": 18,
         "rpcUrls": ["https://api.avax-test.network/ext/bc/C/rpc"],
         "blockExplorerUrls": ["https://testnet.snowtrace.io"],
+        "minimumWalletBalance": 0
+    },
+    {
+        "chainId": "0x1389",
+        "chainName": "Mantle Testnet",
+        "symbol": "MNT",
+        "decimals": 18,
+        "rpcUrls": ["https://rpc.testnet.mantle.xyz/"],
+        "blockExplorerUrls": ["https://explorer.testnet.mantle.xyz/"],
+        "minimumWalletBalance": 0
+    },
+    {
+        "chainId": "0xAEF3",
+        "chainName": "Alfajores Testnet",
+        "symbol": "A-CELO",
+        "decimals": 18,
+        "rpcUrls": ["https://alfajores-forno.celo-testnet.org"],
+        "blockExplorerUrls": ["https://explorer.celo.org/alfajores"],
+        "minimumWalletBalance": 0
+    },
+    {
+        "chainId": "0x82751",
+        "chainName": "Scroll Sepolia",
+        "symbol": "ETH",
+        "decimals": 18,
+        "rpcUrls": ["https://sepolia-rpc.scroll.io/"],
+        "blockExplorerUrls": ["https://sepolia.scrollscan.com"],
+        "minimumWalletBalance": 0
+    },
+    {
+        "chainId": "0x13881",
+        "chainName": "Polygon Mumbai",
+        "symbol": "MATIC",
+        "decimals": 18,
+        "rpcUrls": ["https://rpc-mumbai.matic.today"],
+        "blockExplorerUrls": ["https://mumbai.polygonscan.com/"],
         "minimumWalletBalance": 0
     }
 ]

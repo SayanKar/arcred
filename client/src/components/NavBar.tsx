@@ -9,7 +9,6 @@ import MenuIcon from '@mui/icons-material/Menu';
 import {useGlobalContext} from "../contextProviders/GlobalContextProvider";
 import {useEffect, useState} from "react";
 import {getMetaMaskConnectionStatus} from "../pages/MetaMaskConnector";
-
 export const NavBar = () => {
     const {step: currentMetamaskStep} = useGlobalContext();
     const [isMetamaskConnected, setIsMetamaskConnected] = useState<boolean>(false);
@@ -20,9 +19,9 @@ export const NavBar = () => {
 
     return (
         <Box sx={{ flexGrow: 1 }}>
-            <AppBar position="static">
+            <AppBar position="static" sx={{backgroundColor:"#75b3ef"}}>
                 <Toolbar>
-                    <IconButton
+                    {/* <IconButton
                         size="large"
                         edge="start"
                         color="inherit"
@@ -30,8 +29,9 @@ export const NavBar = () => {
                         sx={{ mr: 2 }}
                     >
                         <MenuIcon />
-                    </IconButton>
-                    <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                    </IconButton> */}
+                    <img src={require('../assets/logo.png')} style={{height: "50px", marginTop:"5px"}}/>
+                    <Typography variant="h6" component="div" sx={{ flexGrow: 1, color:"black", fontWeight: "600"}}>
                         ArCred
                     </Typography>
                     {isMetamaskConnected ?
