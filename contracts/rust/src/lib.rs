@@ -178,7 +178,7 @@ impl Arcred {
         Ok(())
     }
 
-    pub fn registerLoan(
+    pub fn register_loan(
         &mut self,
         loan_type: u8,
         desc: String,
@@ -214,6 +214,35 @@ impl Arcred {
         self.borrower_to_credit_score.setter(borrower).set(credit_score);
 
         Ok(loan_id)
+    }
+
+    pub fn close_loan(&mut self, loan_id: U256) -> Result<(), Vec<u8>> {
+        self.is_valid_lender();
+        assert!(loan_id < self.next_loan_id.get(), "Invalid loanId");
+        assert_eq!(
+            self.loan_id_to_lender.get(loan_id),
+            msg::sender(),
+            "You need to be the lender for this loan to do this operation"
+        );
+
+        self.loan_id_to_is_active.setter(loan_id).set(false);
+
+        let borrower = self.loan_id_to_borrower.get(loan_id);
+
+        if self.loan_id_to_loan_type.get(loan_id) == U8::ZERO {
+            let count = self.borrower_to_number_of_credit_lines.get(borrower);
+            self.borrower_to_number_of_credit_lines.setter(borrower).set(count - U256::from(1));
+        } else {
+            let count = self.borrower_to_number_of_consumer_loans.get(borrower);
+            self.borrower_to_number_of_consumer_loans.setter(borrower).set(count - U256::from(1));
+        }
+
+        self.loan_id_to_last_updated.setter(loan_id).set(U256::from(block::timestamp()));
+
+        let credit_score = self.calculate_score(borrower, loan_id);
+        self.borrower_to_credit_score.setter(borrower).set(credit_score);
+
+        Ok(())
     }
 }
 
