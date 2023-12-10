@@ -167,9 +167,10 @@ export const APIContextProvider  = ({children}: {children: ReactNode})  => {
     async function getBorrowerCreditReport(borrowerAddress: string): Promise<ResponseType<BorrowerStats>> {
         const response: ResponseType<BorrowerStats> = { isError: true, message: 'Internal error', item: undefined }
         try {
-            const bS = await contract?.getBorrowerCreditReport?.(borrowerAddress)
-            const parsedBs = parseBorrowerStats(bS)
-            if (parsedBs) {
+            const cR = await contract?.getBorrowerCreditReport?.(borrowerAddress)
+            const parsedBs = parseBorrowerStats(cR.borrowerStats)
+            const loanDataResponse = await getLoanDataFromLoanIds(cR.loanIds)
+            if (parsedBs && !loanDataResponse.isError && loanDataResponse.item) {
                 response.isError = false
                 response.message = 'Success'
                 response.item = parsedBs
