@@ -1,11 +1,12 @@
 import {useState} from "react";
 import {Layout} from "../components/Layout";
 import Grid2 from "@mui/material/Unstable_Grid2";
-import {MenuItem, Select, SelectChangeEvent} from "@mui/material";
+import {FormControl, InputLabel, MenuItem, Select, SelectChangeEvent} from "@mui/material";
 import Typography from "@mui/material/Typography";
 import {useGlobalContext} from "../contextProviders/GlobalContextProvider";
 import {BorrowerDashboard} from "../components/BorrowerDashboard";
 import {LenderDashboard} from "../components/LenderDashboard";
+import { AdminDashboard } from "../components/AdminDashboard";
 
 export enum UserType{
     BORROWER = "BORROWER",
@@ -23,18 +24,21 @@ export const Dashboard = () => {
 
     return <Layout>
         <Grid2 container justifyContent={"space-between"} alignItems={"baseline"} border={1}>
-                <Select
-                    labelId="view-as-label"
-                    id="demo-simple-select"
-                    value={viewAs}
-                    label="View As"
-                    onChange={viewAsChangeHandler}
-                    color={"primary"}
-                >
-                    <MenuItem value={UserType.BORROWER}>Borrower</MenuItem>
-                    <MenuItem value={UserType.LENDER}>Lender</MenuItem>
-                    <MenuItem value={UserType.ADMIN}>Admin</MenuItem>
-                </Select>
+                <FormControl>
+                    <InputLabel id="demo-simple-select"> View as</InputLabel>
+                    <Select
+                        labelId="view-as-label"
+                        id="demo-simple-select"
+                        value={viewAs}
+                        label="View As"
+                        onChange={viewAsChangeHandler}
+                        color={"primary"}
+                    >
+                        <MenuItem value={UserType.BORROWER}>Borrower</MenuItem>
+                        <MenuItem value={UserType.LENDER}>Lender</MenuItem>
+                        <MenuItem value={UserType.ADMIN}>Admin</MenuItem>
+                    </Select>
+                </FormControl>
                 <Typography><b>Account: </b> {account}</Typography>
         </Grid2>
         {getDataByUserType(viewAs)}
@@ -46,7 +50,7 @@ const getDataByUserType = (viewType: UserType) => {
         case UserType.LENDER:
             return <LenderDashboard />
         case UserType.ADMIN:
-            return <BorrowerDashboard />
+            return <AdminDashboard />
         case UserType.BORROWER:
         default:
             return <BorrowerDashboard />
