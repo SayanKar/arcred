@@ -33,7 +33,7 @@ export default function RegisterBorrowerActivity() {
         setRegistering(false);
     }
     return (
-        <Box>
+        <Box sx={{marginTop: "10px"}}>
             <Typography variant="h6" sx={{ marginBottom: "30px" }}>Report borrower activity</Typography>
             <Box sx={{ display: "flex", flexWrap: "wrap", width: "600px"}}>
                 <TextField
@@ -61,7 +61,7 @@ export default function RegisterBorrowerActivity() {
                     sx={{ width: "250px", marginBottom: "30px" }}
                 />
             </Box>
-            <Button variant="contained" color="success" onClick={handleSubmit}>{registering ? "Reporting" : "Report activity"}</Button>
+            <Button variant="outlined" color="success" onClick={handleSubmit}>{registering ? "Reporting" : "Report activity"}</Button>
         </Box>
     );
 }
