@@ -49,7 +49,7 @@ export const BorrowerDashboard = () => {
     }
 
     return <>
-        <Box sx={{display:"flex", justifyContent: "space-between"}}>
+        <Box sx={{display:"flex", justifyContent: "space-between", flexWrap:"wrap"}}>
             <Box>
                 <Typography sx={{ mt: 4, mb: 2 }} variant="h6" component="div" marginTop={2}>
                     Your credit report
