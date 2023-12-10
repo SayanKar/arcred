@@ -11,6 +11,8 @@ use alloy_primitives::U8;
 use stylus_sdk::{prelude::*, msg, block};
 use stylus_sdk::alloy_primitives::{Address, U256};
 
+pub type CreditReport = (U256,U256,U256,U256);
+
 // Define the entrypoint as a Solidity storage object, The sol_storage! macro
 // will generate Rust-equivalent structs with all fields mapped to Solidity-equivalent
 // storage slots and types.
@@ -244,6 +246,26 @@ impl Arcred {
 
         Ok(())
     }
+
+    pub fn get_my_credit_report(&self) -> Result<CreditReport, Vec<u8>> {
+        self.get_borrower_credit_report(msg::sender())
+    }
+
+    pub fn get_borrower_credit_report(&self, user: Address) -> Result<CreditReport, Vec<u8>> {
+        self.has_approval(user);
+
+        let credit_score = self.borrower_to_credit_score.get(user);
+        let number_of_defaults = self.borrower_to_number_of_defaults.get(user);
+        let number_of_credit_lines = self.borrower_to_number_of_credit_lines.get(user);
+        let number_of_consumer_loans = self.borrower_to_number_of_consumer_loans.get(user);
+
+        Ok((
+            credit_score,
+            number_of_defaults,
+            number_of_credit_lines,
+            number_of_consumer_loans,
+        ))
+    }
 }
 
 // Modifiers
@@ -264,11 +286,13 @@ impl Arcred {
     }
 
     fn has_approval(&self, borrower: Address) {
-        assert_eq!(
-            self.is_lender_approved(borrower, msg::sender()),
-            Ok(true),
-            "You need to be a approved lender for the address to do this operation"
-        )
+        if borrower != msg::sender() {
+            assert_eq!(
+                self.is_lender_approved(borrower, msg::sender()),
+                Ok(true),
+                "You need to be a approved lender for the address to do this operation"
+            )
+        }
     }
 
     fn initialize_borrower_stats_if_empty(&mut self, borrower: Address) {
