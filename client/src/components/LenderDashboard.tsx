@@ -19,10 +19,11 @@ import RegisterBorrowerActivity from "./RegisterBorrowerActivity";
 export const LenderDashboard = () => {
 
     const {account} = useGlobalContext();
-    const {registerLoan, getBorrowerCreditReport} = useApiContext();
+    const {registerLoan, getBorrowerCreditReport, closeLoan} = useApiContext();
 
     const lendingFormData = useRef({loanType: 0, description: '', amount: 0, borrowerAddress: ''})
     const [borrowerAddress, setBorrowerAddress] = useState('');
+    const [loadId, setLoanId] = useState<number>();
     const [borrowerCreditReport, setBorrowerCreditReport] = useState<BorrowerStats>({} as BorrowerStats)
 
     const handleLendingRegistration = () => {
@@ -30,7 +31,7 @@ export const LenderDashboard = () => {
         registerLoan(lendingFormData.current.loanType, lendingFormData.current.description,
             lendingFormData.current.amount, lendingFormData.current.borrowerAddress).then(res => {
                 if(res.isError){
-                    alert(res.message);
+                    return alert(res.message);
                 }
         })
     }
@@ -38,9 +39,18 @@ export const LenderDashboard = () => {
     const fetchBorrowerCreditReport = () => {
         getBorrowerCreditReport(borrowerAddress).then(res => {
             if(res.isError){
-                alert(res.message);
+                return alert(res.message);
             }
             setBorrowerCreditReport(res.item!);
+        })
+    }
+
+    const closeLoanHandler = () => {
+        closeLoan(loadId!).then(res => {
+            if(res.isError){
+                return alert(res.message);
+            }
+            alert("Loan closed successfully")
         })
     }
 
@@ -111,6 +121,18 @@ export const LenderDashboard = () => {
                 ])
             }
         </Grid2>}
+
+        <Box sx={{marginRight: "50px", marginTop: "10px"}}>
+            <Typography sx={{ mt: 4, mb: 2 }} variant="h6" component="div" marginTop={2}>
+                Close a loan
+            </Typography>
+
+            <Grid2 xs >
+                <TextField sx={{ width: '500px' }} id="closeLoanId" label="Loan Id" variant="outlined" onChange={(e) => { setLoanId(parseInt(e.target.value)) }} />
+                <br /><br />
+                <Button color="success" variant="outlined" onClick={closeLoanHandler}>Close loan</Button>
+            </Grid2>
+        </Box>
     </>
 }
 
