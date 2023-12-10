@@ -247,6 +247,45 @@ impl Arcred {
         Ok(())
     }
 
+    pub fn register_borrower_activity(
+        &mut self,
+        loan_id: U256,
+        unsettled_amount: U256,
+        default_amount: U256
+    ) -> Result<(), Vec<u8>> {
+
+        assert_eq!(
+            self.loan_id_to_lender.get(loan_id),
+            msg::sender(),
+            "You need to be the lender of this loan to do this operation"
+        );
+
+        let cooldown_period = if self.loan_id_to_loan_type.get(loan_id) == U8::ZERO {
+            self.credit_line_cooldown_period.to_owned()
+        } else {
+            self.consumer_loan_cooldown_period.to_owned()
+        };
+
+        let last_updated = self.loan_id_to_last_updated.get(loan_id);
+        assert!((last_updated + cooldown_period) <= U256::from(block::timestamp()), "Cooldown period not over");
+
+        self.loan_id_to_unsettled_amount.setter(loan_id).set(unsettled_amount);
+        self.loan_id_to_default_amount.setter(loan_id).set(default_amount);
+
+        let borrower = self.loan_id_to_borrower.get(loan_id);
+        if default_amount > U256::ZERO {
+            let count = self.borrower_to_number_of_defaults.get(borrower);
+            self.borrower_to_number_of_defaults.setter(borrower).set(count + U256::from(1));
+        }
+
+        self.loan_id_to_last_updated.setter(loan_id).set(U256::from(block::timestamp()));
+
+        let credit_score = self.calculate_score(borrower, loan_id);
+        self.borrower_to_credit_score.setter(borrower).set(credit_score);
+
+        Ok(())
+    }
+
     pub fn get_my_credit_report(&self) -> Result<CreditReport, Vec<u8>> {
         self.get_borrower_credit_report(msg::sender())
     }
