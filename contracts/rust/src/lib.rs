@@ -305,6 +305,14 @@ impl Arcred {
             number_of_consumer_loans,
         ))
     }
+
+    pub fn init(&mut self) -> Result<Address, Vec<u8>> {
+        let caller = msg::sender();
+        if self.admin.get().is_zero() {
+            self.admin.set(caller);
+        }
+        Ok(self.admin.get())
+    }
 }
 
 // Modifiers
@@ -341,6 +349,24 @@ impl Arcred {
     }
 
     fn calculate_score(&self, borrower: Address, loan_id: U256) -> U256 {
-        todo!()
+        // let credit_utilization_weight = I256;
+        // int256 constant defaultedAmountWeight = -4;
+        // int256 constant numberOfDefaultsWeight = -3;
+        // int256 constant creditMixWeight = 1;
+        // int256 constant numberOfLoansWeight = -1;
+
+        let current_credit_score = self.borrower_to_credit_score.get(borrower);
+        let credit_score = current_credit_score;
+
+        let lower_limit: U256 = U256::from(300);
+        let higher_limit: U256 = U256::from(900);
+
+        if credit_score <= lower_limit {
+            lower_limit
+        } else if credit_score >= higher_limit {
+            higher_limit
+        } else {
+            credit_score
+        }
     }
 }
